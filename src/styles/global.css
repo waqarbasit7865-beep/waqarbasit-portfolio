@@ -380,32 +380,20 @@ section:focus {
   margin-right: auto;
 }
 .brand__mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 0.8rem;
-  font-weight: 700;
+  display: block;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 36px;
+  overflow: hidden;
   position: relative;
-  transition: transform 0.6s var(--ease), border-radius 0.6s var(--ease);
 }
-.brand__mark::after {
-  content: '';
+.brand__logo {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--blue);
-  border: 2px solid var(--ink);
-}
-.brand:hover .brand__mark {
-  transform: rotate(-8deg);
-  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  max-width: none;
+  left: -6px;
+  top: -19px;
 }
 .nav ul {
   display: flex;
