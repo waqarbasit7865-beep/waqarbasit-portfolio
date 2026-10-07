@@ -27,7 +27,12 @@ export const site = {
   hero: {
     label: 'Waqar Basit · UI/UX & Product Designer',
     scenes: [
-      { id: 'intro', name: 'Introduction', headline: ['Complex ideas.', '*Clear* experiences.'] },
+      {
+        id: 'intro',
+        name: 'Introduction',
+        headline: ['Complex ideas.', '*Clear* experiences.'],
+        sub: 'I turn complex workflows into clear, intuitive digital products.',
+      },
       {
         id: 'product',
         name: 'Product thinking',

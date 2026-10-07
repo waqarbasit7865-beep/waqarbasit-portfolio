@@ -1,15 +1,20 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { site } from '../content/site'
 import { toolMarks } from '../content/toolMarks'
-import { ArrowRight } from '../components/Icons'
+import { ArrowRight, ArrowUpRight, Download } from '../components/Icons'
 import { gsap, ScrollTrigger, MOTION_OK, PLAY_ONCE } from '../lib/gsap'
 import { useIsoLayoutEffect } from '../lib/hooks'
 import { scrollToId } from '../lib/nav'
 import { HeroSound } from '../lib/heroSound'
 import { CraftBoard, FlowGraphic, FlowLines, GridField, ToolMarks, FLOW_NODES, MARK_POS, boxStyle } from './hero/visuals'
+import { IntroWaves, StudioVisual } from './hero/studio'
 import { SHOW_DRAFTS } from '../lib/content'
 
 const SCENES = site.hero.scenes
+/** Scene 1 professional-profile links, reused from site.links */
+const PROFILES = ['LinkedIn', 'Upwork']
+  .map((label) => site.links.find((l) => l.label === label))
+  .filter((l): l is (typeof site.links)[number] => Boolean(l))
 /** Timeline label times (scene dwell positions) and the scene boundaries used for the progress indicator */
 const LABELS = [0, 3.05, 5.0, 7.6]
 const BOUNDS = [1.48, 3.66, 5.86]
@@ -98,6 +103,24 @@ export function Hero() {
             ease: 'power3.out',
           }, 0)
           .from(q('.hero__hud > *'), { opacity: 0, y: 10, duration: 0.6, stagger: 0.06 }, 0.9)
+
+        /* Scene 1 additions: supporting copy, actions, waves, then the studio layers flow → structure → finished interface.
+           Containers are animated (not .btn elements, whose CSS transform transition would fight the tween). */
+        tl.from(q('.scene--intro .hx-sub'), { y: 18, opacity: 0, duration: 0.9 }, 0.6)
+          .from(q('.scene--intro .hx-actions, .scene--intro .hx-profiles'), { y: 16, opacity: 0, duration: 0.8, stagger: 0.1 }, 0.75)
+          .from(q('.hx-waves__in'), { opacity: 0, duration: 2.2, ease: 'power2.out' }, 0.1)
+          // 1 · flow
+          .from(q('.hx-layer--flow .hx-layer__in'), { y: -36, z: -160, opacity: 0, duration: 1.1 }, 0.45)
+          .from(q('.hx-flow__node'), { opacity: 0, scale: 0.7, transformOrigin: '50% 50%', duration: 0.45, stagger: 0.07, ease: 'back.out(1.7)' }, 0.65)
+          .fromTo(q('.hx-flow__link'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.6, stagger: 0.07, ease: 'power2.inOut' }, 0.8)
+          // 2 · structure
+          .from(q('.hx-layer--wire .hx-layer__in'), { y: 44, z: -120, opacity: 0, duration: 1.1 }, 1.1)
+          .from(q('.hx-wire__part'), { opacity: 0, duration: 0.45, stagger: 0.06, ease: 'power2.out' }, 1.3)
+          // 3 · finished interface
+          .from(q('.hx-layer--dash .hx-layer__in'), { y: 70, z: -60, rotationX: 10, opacity: 0, duration: 1.2 }, 1.55)
+          .from(q('.hx-dash__bar'), { scaleY: 0, transformOrigin: '50% 100%', duration: 0.6, stagger: 0.06, ease: 'power3.out' }, 1.95)
+          .from(q('.hx-dash__task'), { x: 14, opacity: 0, duration: 0.5, stagger: 0.08 }, 2.0)
+          .from(q('.hx-studio__caption'), { opacity: 0, duration: 0.7, ease: 'power2.out' }, 2.4)
       })
 
       /* ── Desktop: pinned four-scene timeline ── */
@@ -136,6 +159,9 @@ export function Hero() {
 
         /* T1 → Product thinking: horizontal hand-off */
         tl.to(S('intro', '.scene__copy'), { xPercent: -14, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
+          // Scene 1 visual + waves leave with the copy and are gone (1.45) before scene 2 is shown (1.47)
+          .to(S('intro', '.hx-studio'), { xPercent: 22, scale: 0.92, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
+          .to(S('intro', '.hx-waves'), { autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
           .to(q('.light--0'), { opacity: 0, duration: 1 }, 1)
           .to(q('.light--1'), { opacity: 1, duration: 1 }, 1)
         moveMarks(tl, 1, 1)
@@ -306,6 +332,51 @@ export function Hero() {
     }
   }, [])
 
+  /* ── Scene 1: restrained pointer tilt of the studio composition (pinned desktop, fine pointer) ──
+     A rotation of at most ±4° / ±3°, eased; it leans toward the pointer but never follows it around. */
+  const resetTilt = useRef<() => void>(() => {})
+  useEffect(() => {
+    const el = root.current
+    const tilt = el?.querySelector<HTMLElement>('.hx-studio__tilt')
+    if (!el || !tilt) return
+    const mq = window.matchMedia(`${PINNED} and (pointer: fine)`)
+    if (!mq.matches) return
+    const rx = gsap.quickTo(tilt, 'rotationX', { duration: 1.1, ease: 'power3.out' })
+    const ry = gsap.quickTo(tilt, 'rotationY', { duration: 1.1, ease: 'power3.out' })
+    const clamp = gsap.utils.clamp(-1, 1)
+    let raf = 0
+    const neutral = () => {
+      cancelAnimationFrame(raf)
+      rx(0)
+      ry(0)
+    }
+    const move = (e: PointerEvent) => {
+      if (sceneRef.current !== 0) return
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const nx = clamp((e.clientX / window.innerWidth - 0.5) * 2)
+        const ny = clamp((e.clientY / window.innerHeight - 0.5) * 2)
+        ry(nx * 4)
+        rx(-ny * 3)
+      })
+    }
+    resetTilt.current = neutral
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerleave', neutral)
+    return () => {
+      resetTilt.current = () => {}
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerleave', neutral)
+      cancelAnimationFrame(raf)
+      gsap.killTweensOf(tilt)
+      gsap.set(tilt, { clearProps: 'transform' })
+    }
+  }, [])
+  // Return smoothly to neutral as soon as the visitor leaves scene 1
+  useEffect(() => {
+    if (scene !== 0) resetTilt.current()
+  }, [scene])
+
   /* ── Pause decorative CSS loops when the hero is offscreen ── */
   useEffect(() => {
     const el = root.current
@@ -378,15 +449,38 @@ export function Hero() {
 
         {/* 01 — Introduction */}
         <div className="scene scene--intro" data-scene="0">
+          <IntroWaves paused={scene !== 0} />
           <div className="scene__copy">
             <p className="hx-label">
               <span>{site.hero.label}</span>
             </p>
             <Headline lines={SCENES[0].headline} id="hx-title-0" as="h1" underline />
+            {SCENES[0].sub && <p className="hx-sub">{SCENES[0].sub}</p>}
+            <div className="hx-actions">
+              <a className="btn btn--primary hx-actions__main" href="/#work" onClick={toWork}>
+                View Portfolio <ArrowRight />
+              </a>
+              <a className="btn btn--ghost hx-actions__resume" href={site.resume} download>
+                Download Resume <Download />
+              </a>
+            </div>
+            {PROFILES.length > 0 && (
+              <ul className="hx-profiles" aria-label="Professional profiles">
+                {PROFILES.map((p) => (
+                  <li key={p.label}>
+                    <a href={p.href} target="_blank" rel="noopener noreferrer" aria-label={`${p.label} profile (opens in a new tab)`}>
+                      {p.label} <ArrowUpRight />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="hx-cue" aria-hidden="true">
               <span className="hx-cue__line" />
               Scroll to explore
             </p>
+            {/* positioned against the headline's own geometry, so it never collides with it */}
+            <StudioVisual paused={scene !== 0} />
           </div>
         </div>
 

@@ -59,7 +59,7 @@ export function Header() {
       <div className="header__inner">
         <Link to="/" className="brand" aria-label={`${site.name} — home`}>
           <span className="brand__mark" aria-hidden="true">
-            <img className="brand__logo" src="/wb-logo.png" alt="" width="1280" height="1280" fetchPriority="high" />
+            <img className="brand__logo" src="/wb-logo.png?v=3" alt="" width="56" height="36" fetchPriority="high" />
           </span>
           <span className="brand__name">{site.name}</span>
         </Link>

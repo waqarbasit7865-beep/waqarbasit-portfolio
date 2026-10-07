@@ -384,16 +384,12 @@ section:focus {
   flex: 0 0 56px;
   width: 56px;
   height: 36px;
-  overflow: hidden;
-  position: relative;
 }
+/* wb-logo.png is pre-cropped to exactly this 56×36 window (exported at 3×) */
 .brand__logo {
-  position: absolute;
-  width: 70px;
-  height: 70px;
-  max-width: none;
-  left: -6px;
-  top: -19px;
+  display: block;
+  width: 56px;
+  height: 36px;
 }
 .nav ul {
   display: flex;
