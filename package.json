@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "images": "node scripts/optimize-images.mjs",
-    "build:artifact": "tsc -b && vite build --mode artifact"
+    "build:artifact": "tsc -b && vite build --mode artifact",
+    "thumbs": "node scripts/fetch-more-work.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
