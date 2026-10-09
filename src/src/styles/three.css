@@ -1,0 +1,160 @@
+/* ═════════════════════════ 3D layer (one shared WebGL canvas) ═════════════════════════
+   html.has-3d  → WebGL available: 3D compositions replace the HTML/SVG illustrations.
+   html.no-3d   → no WebGL (or it failed): the original illustrations stay as the static fallback. */
+
+.stage3d {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  pointer-events: none;
+}
+
+/* ── Hero: pinned desktop stage ── */
+.hero .hx3d {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.9s var(--ease);
+}
+.has-3d .hero--pinned .hx3d {
+  display: block;
+}
+.hero .hx3d.is-ready {
+  opacity: 1;
+}
+
+/* Illustrations replaced by the 3D compositions (kept in the DOM as the no-WebGL fallback) */
+.has-3d .hero .hx-studio,
+.has-3d .hero .flowgfx,
+.has-3d .hero .craft,
+.has-3d .hero .gridfield,
+.has-3d .hero .spatial,
+.has-3d .hero .hx-waves,
+.has-3d .hero .hero-tool-orbit,
+.has-3d .hero .hero__marks,
+.has-3d .hero .hero__lines {
+  display: none !important;
+}
+/* The tool list stays available to assistive tech; the 3D orbit shows it visually */
+.has-3d .hero .scene__copy > .tool-constellation {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ── Hero: stacked layout slots (mobile, short screens, reduced motion) ── */
+.hero .hx3d-slot {
+  display: none;
+}
+.has-3d .hero:not(.hero--pinned) .hx3d-slot {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 5 / 4;
+  margin-inline: auto;
+  pointer-events: none;
+}
+.has-3d .hero:not(.hero--pinned) .scene--intro .hx3d-slot {
+  aspect-ratio: 4 / 3;
+  margin-top: 4px;
+}
+.hx3d-slot .hx3d-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+.hx3d-slot .hx3d-still:not([src]) {
+  visibility: hidden;
+}
+.hx3d-slot.is-ready .hx3d-still {
+  opacity: 1;
+}
+.hx3d-slot.is-live .hx3d-still {
+  opacity: 0;
+  transition-delay: 0.15s;
+}
+
+/* Honest labels for illustrative content */
+.hero .hx3d-cap {
+  display: none;
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--paper) 52%, transparent);
+  pointer-events: none;
+}
+.has-3d .hero .hx3d-cap {
+  display: block;
+}
+.has-3d .hero--pinned .scene .hx3d-cap {
+  display: none;
+}
+.hero .hx3d-cap--stage {
+  display: none !important;
+}
+.has-3d .hero--pinned .hx3d-cap--stage {
+  display: block !important;
+}
+.has-3d .hero--pinned .hx3d-cap {
+  position: absolute;
+  bottom: 30px;
+  z-index: 3;
+}
+.has-3d .hero--pinned .hx3d-cap--right {
+  right: calc(var(--gutter) + 210px);
+}
+.has-3d .hero--pinned .hx3d-cap--left {
+  left: calc(var(--gutter) + 150px);
+}
+.has-3d .hero:not(.hero--pinned) .hx3d-cap {
+  grid-column: 1 / -1;
+  justify-self: center;
+  text-align: center;
+  margin-top: -12px;
+}
+
+/* ── Design Approach: the 3D process stage ── */
+.approach .ap3d {
+  display: none;
+}
+.has-3d .approach .ap3d {
+  display: block;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease);
+}
+.has-3d .approach .ap3d.is-ready {
+  opacity: 1;
+}
+.has-3d .approach .ap-fallback {
+  display: none;
+}
+.approach .ap3d__still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+}
+.approach .ap3d.is-still .ap3d__still {
+  display: block;
+}

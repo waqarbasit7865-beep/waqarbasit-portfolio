@@ -1,0 +1,319 @@
+/* ═════════ Selected Work banners — real screens in modelled devices, one identity per project ═════════
+   Scroll and pointer drive two custom properties on .pstage (set from Work.tsx):
+   --sp  0 → 1   devices settle from a lifted, spread pose into the resting composition
+   --tx/--ty     restrained pointer tilt (±1) */
+
+.cover-frame--stage {
+  background: var(--surface, #0f1219);
+}
+.pstage {
+  --sp: 1;
+  --tx: 0;
+  --ty: 0;
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+  background: var(--surface, #0f1219);
+}
+.pstage__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 70% at 72% 38%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
+    radial-gradient(45% 55% at 18% 92%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in srgb, var(--surface) 70%, #000) 0%, var(--surface) 55%, color-mix(in srgb, var(--surface) 80%, var(--accent)) 100%);
+}
+.pstage__bg::after {
+  /* fine layout grid, fading toward the edges */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--paper) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--paper) 7%, transparent) 1px, transparent 1px);
+  background-size: 6.25cqw 6.25cqw;
+  mask-image: radial-gradient(70% 70% at 60% 45%, #000 20%, transparent 75%);
+}
+.pstage__mark {
+  position: absolute;
+  left: 4cqw;
+  bottom: 2.4cqw;
+  z-index: -1;
+  font-weight: 600;
+  font-size: 11cqw;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--paper) 16%, transparent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pstage__chip {
+  position: absolute;
+  left: 4cqw;
+  top: 3.6cqw;
+  padding: 0.5em 0.95em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  backdrop-filter: blur(6px);
+  font-family: var(--f-mono);
+  font-size: max(9px, 1.05cqw);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--paper) 85%, var(--accent));
+}
+.pstage__floor {
+  position: absolute;
+  left: 18%;
+  right: 6%;
+  bottom: 6%;
+  height: 12%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+  filter: blur(6px);
+}
+
+/* the 3D rig: one perspective for every device */
+.pstage__rig {
+  position: absolute;
+  inset: 0;
+  perspective: 1600px;
+  perspective-origin: 60% 40%;
+  transform-style: preserve-3d;
+}
+.dev {
+  position: absolute;
+  display: block;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.dev__screen {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: #fff;
+}
+.dev__screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* phone: rounded slab with a visible edge (thickness) and a bezel */
+.dev--phone {
+  width: 21cqw;
+  aspect-ratio: 390 / 845;
+  top: 50%;
+  border-radius: 3.2cqw;
+  padding: 0.55cqw;
+  background: linear-gradient(140deg, #3a3d46, #121318 40%, #22252c);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 2.4cqw 4cqw -1.2cqw rgba(0, 0, 0, 0.7);
+}
+.dev--phone .dev__edge {
+  /* side of the slab, a few px behind the face */
+  position: absolute;
+  inset: 0.2cqw -0.35cqw -0.35cqw 0.2cqw;
+  border-radius: inherit;
+  background: linear-gradient(140deg, #4a4d57, #0b0c0f);
+  transform: translateZ(-6px);
+}
+.dev--phone .dev__screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 2.7cqw;
+}
+.dev__island {
+  position: absolute;
+  top: 2.2%;
+  left: 50%;
+  width: 30%;
+  height: 3.4%;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: #050506;
+}
+/* three-phone fan; --sp opens it as the card arrives */
+.dev--phone {
+  --x: 0cqw;
+  --z: 0px;
+  --ry: 0deg;
+  --rz: 0deg;
+  left: 50%;
+  transform:
+    translate(-50%, -50%)
+    translate3d(calc(var(--x) * (0.55 + 0.45 * var(--sp)) + var(--tx) * 0.8cqw), calc((1 - var(--sp)) * 4cqw + var(--ty) * 0.6cqw), var(--z))
+    rotateX(calc(10deg + var(--ty) * -3deg))
+    rotateY(calc(var(--ry) + var(--tx) * 5deg))
+    rotateZ(var(--rz));
+}
+.dev--p0 {
+  --x: -21cqw;
+  --z: -140px;
+  --ry: 22deg;
+  --rz: -2deg;
+}
+.dev--p1 {
+  --x: 4cqw;
+  --z: 30px;
+  --ry: -14deg;
+  z-index: 2;
+}
+.dev--p2 {
+  --x: 27cqw;
+  --z: -90px;
+  --ry: -30deg;
+  --rz: 2deg;
+}
+
+/* laptop: lid with bezel + base seen in perspective */
+.dev--laptop {
+  width: 62cqw;
+  left: 26%;
+  top: 15%;
+  transform:
+    translate3d(calc(var(--tx) * 0.6cqw), calc((1 - var(--sp)) * 3cqw), 0)
+    rotateX(calc(6deg + var(--ty) * -2deg))
+    rotateY(calc(-16deg + var(--tx) * 4deg));
+}
+.dev__lid {
+  display: block;
+  padding: 1cqw 1cqw 1.6cqw;
+  border-radius: 1.4cqw 1.4cqw 0.4cqw 0.4cqw;
+  background: linear-gradient(160deg, #2a2d35, #0e0f13);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 3cqw 5cqw -2cqw rgba(0, 0, 0, 0.75);
+}
+.dev--laptop .dev__screen {
+  aspect-ratio: 16 / 10;
+  border-radius: 0.3cqw;
+}
+.dev__base {
+  display: block;
+  height: 2.6cqw;
+  margin: 0 -4.5%;
+  border-radius: 0 0 1.4cqw 1.4cqw;
+  background: linear-gradient(#c9ccd4, #7b7f89 45%, #2a2c33);
+  transform-origin: top center;
+  transform: rotateX(68deg);
+  box-shadow: 0 2cqw 2.4cqw -1cqw rgba(0, 0, 0, 0.8);
+}
+
+/* browser window floating in front */
+.dev--browser {
+  width: 22cqw;
+  left: 6%;
+  top: 22%;
+  border-radius: 1cqw;
+  overflow: hidden;
+  background: #151a23;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 3cqw 5cqw -1.5cqw rgba(0, 0, 0, 0.8);
+  transform:
+    translate3d(calc(var(--tx) * 1.2cqw - (1 - var(--sp)) * 3cqw), calc((1 - var(--sp)) * 5cqw), 80px)
+    rotateX(calc(4deg + var(--ty) * -3deg))
+    rotateY(calc(18deg + var(--tx) * 5deg));
+}
+.dev__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45cqw;
+  height: 2.4cqw;
+  padding: 0 0.9cqw;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.dev__bar i {
+  width: 0.6cqw;
+  height: 0.6cqw;
+  border-radius: 50%;
+  background: rgba(244, 244, 241, 0.25);
+}
+.dev__bar b {
+  margin-left: 0.6cqw;
+  font: 500 max(7px, 0.8cqw) / 1 var(--f-mono);
+  color: var(--muted);
+}
+.dev--browser .dev__screen {
+  aspect-ratio: 298 / 420;
+}
+
+/* ── per-project identity ── */
+.pstage--soundlab .pstage__bg {
+  background:
+    radial-gradient(55% 65% at 62% 40%, rgba(240, 87, 74, 0.38), transparent 70%),
+    radial-gradient(40% 50% at 15% 85%, rgba(232, 215, 190, 0.12), transparent 70%),
+    linear-gradient(165deg, #241311 0%, #170d0c 60%, #2a1613 100%);
+}
+.pstage--x-money .pstage__bg {
+  background:
+    radial-gradient(50% 60% at 70% 30%, rgba(222, 160, 255, 0.42), transparent 70%),
+    radial-gradient(45% 55% at 30% 80%, rgba(140, 170, 255, 0.28), transparent 70%),
+    linear-gradient(150deg, #1a1226 0%, #130e1b 55%, #241a35 100%);
+}
+.pstage--ucl-energy .pstage__bg {
+  background:
+    radial-gradient(60% 55% at 70% 35%, rgba(214, 166, 74, 0.26), transparent 70%),
+    linear-gradient(180deg, #0d1d31 0%, #0b1828 60%, #081220 100%);
+}
+.pstage--ucl-energy .pstage__bg::before {
+  /* a calm horizon line — maritime / energy */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 72%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(214, 166, 74, 0.55), transparent);
+}
+
+/* case-study header: same object, a little more room */
+.cs-cover .pstage {
+  aspect-ratio: 16 / 8.2;
+}
+
+@media (max-width: 640px) {
+  .pstage {
+    aspect-ratio: 4 / 3.4;
+  }
+  .dev--phone {
+    width: 27cqw;
+  }
+  .dev--p0 {
+    --x: -26cqw;
+  }
+  .dev--p2 {
+    --x: 30cqw;
+  }
+  .dev--laptop {
+    width: 72cqw;
+    left: 20%;
+    top: 20%;
+  }
+  .dev--browser {
+    width: 27cqw;
+    left: 4%;
+    top: 26%;
+  }
+  .pstage__chip {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pstage {
+    --sp: 1 !important;
+    --tx: 0 !important;
+    --ty: 0 !important;
+  }
+}
+.cs-cover .pstage__chip { display: none; }
