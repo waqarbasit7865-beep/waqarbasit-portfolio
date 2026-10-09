@@ -1,0 +1,5 @@
+Tool logos used in the hero (bundled locally, unmodified shapes and colours).
+Trademarks belong to their owners; shown to name the tools Waqar Basit works with.
+- figma, claude, chatgpt (OpenAI mark), midjourney: @lobehub/icons-static-svg 1.95.1 (MIT)
+- framer, webflow, wordpress, wix, unity: simple-icons (CC0) with brand hex from simple-icons data (white = approved mono variant on dark)
+- godot, photoshop, illustrator: devicon 2.17.0 (MIT) "original" colour versions
