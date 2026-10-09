@@ -32,7 +32,18 @@ function textWidth(el: HTMLElement) {
 }
 
 /** Free space beside each scene's copy, in stage pixels. */
-export function measureFree(stage: HTMLElement): (Region | null)[] {
+export function measureFree(stage: HTMLElement) {
+  const ul = stage.querySelector<SVGElement>('.scene--intro .hx-underline')
+  let underline: { x: number; y: number } | null = null
+  if (ul) {
+    const r = ul.getBoundingClientRect()
+    const s = stage.getBoundingClientRect()
+    if (r.width) underline = { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }
+  }
+  return { regions: measureRegions(stage), underline }
+}
+
+function measureRegions(stage: HTMLElement): (Region | null)[] {
   const W = stage.clientWidth
   const H = stage.clientHeight
   const header = 84
@@ -82,6 +93,9 @@ export function useHero3D(root: RefObject<HTMLElement | null>, pinned: boolean, 
           const off = stage.register({ el: host, view: world, priority: 2 })
           const relayout = () => world.layout()
           document.fonts?.ready.then(() => !cancelled && relayout())
+          // the headline settles after its load animation; re-measure once it has
+          const late = window.setTimeout(relayout, 2600)
+          cleanups.push(() => window.clearTimeout(late))
           window.addEventListener('resize', relayout)
           requestAnimationFrame(() => host.classList.add('is-ready'))
           cleanups.push(() => {
@@ -108,9 +122,8 @@ export function useHero3D(root: RefObject<HTMLElement | null>, pinned: boolean, 
             slot.classList.add('is-ready')
             still.dispose()
           })
-        const run = () => !cancelled && snap()
-        if (document.fonts) document.fonts.ready.then(run)
-        else run()
+        // logos and fonts must be ready before a still image is taken
+        Promise.all([m.logosReady(), document.fonts?.ready]).then(() => !cancelled && snap())
 
         if (mode === 'live') {
           slots.forEach((slot) => {

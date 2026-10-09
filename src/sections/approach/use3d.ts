@@ -1,104 +1,67 @@
 /**
- * Design Approach ↔ process sculpture (three.js is loaded on demand).
- *  • desktop with motion: one live view in the sticky panel; its state follows the active step (reversible).
- *  • stacked steps (mobile / reduced motion): each step shows a still render of its state; with motion
- *    allowed, the single live canvas joins the step most in view and plays that step's focal moment.
+ * Design Approach ↔ 3D process stage (three.js is loaded on demand).
+ *  • motion allowed: one live view in the stage; the page calls setStep() when the active step changes;
+ *  • reduced motion: each step's model is rendered once as a still image and swapped with the step;
+ *  • no WebGL: the illustrated 2D canvas stays (CSS shows it under html.no-3d).
  */
-import { useEffect, type RefObject } from 'react'
-import { gsap } from '../../lib/gsap'
-import { disable3D, load3D, mode3D } from '../../three/support'
+import { useEffect, useState, type RefObject } from 'react'
+import { disable3D, load3D, mode3D, type Mode3D } from '../../three/support'
 
-export interface SculptHandle {
-  s: number
-  setTarget(t: number): void
+export interface ProcessHandle {
+  setStep(i: number): void
 }
 
-/** animate the sculpture to a step; long jumps take a little longer but stay brisk */
-export function goSculpt(sc: SculptHandle | null, t: number, instant = false) {
-  if (!sc) return
-  sc.setTarget(t)
-  if (instant) {
-    gsap.killTweensOf(sc)
-    sc.s = t
-    return
-  }
-  gsap.to(sc, { s: t, duration: 0.95 + 0.22 * Math.min(3, Math.abs(t - sc.s)), ease: 'power2.inOut', overwrite: true })
-}
-
-export function useApproach3D(root: RefObject<HTMLElement | null>, live: boolean, handle: { current: SculptHandle | null }, active: { current: number }) {
+export function useProcess3D(root: RefObject<HTMLElement | null>, handle: { current: ProcessHandle | null }, active: { current: number }): Mode3D {
+  const [mode] = useState<Mode3D>(() => (typeof window === 'undefined' ? 'off' : mode3D()))
   useEffect(() => {
     const el = root.current
-    const mode = mode3D()
     if (!el || mode === 'off') return
+    const host = el.querySelector<HTMLElement>('.ap3d')
+    const img = el.querySelector<HTMLImageElement>('.ap3d__still')
+    if (!host) return
     let cancelled = false
     const cleanups: (() => void)[] = []
     load3D()
-      .then((m) => {
+      .then(async (m) => {
         if (cancelled) return
         const stage = m.stage()
-        if (live && mode === 'live') {
-          const host = el.querySelector<HTMLElement>('.ap3d')
-          if (!host) return
-          const sc = m.createSculpture()
-          handle.current = sc
-          goSculpt(sc, active.current, true)
-          const off = stage.register({ el: host, view: sc, priority: 1 })
+        if (mode === 'live') {
+          const v = m.createProcess(false, active.current)
+          handle.current = v
+          const off = stage.register({ el: host, view: v, priority: 1, onActive: (on) => on && v.replay() })
           requestAnimationFrame(() => host.classList.add('is-ready'))
           cleanups.push(() => {
             off()
             handle.current = null
-            gsap.killTweensOf(sc)
-            host.classList.remove('is-ready')
-            sc.dispose()
+            v.dispose()
           })
           return
         }
-        /* stacked steps: still renders, plus the live canvas on the step in view */
-        const hosts = Array.from(el.querySelectorAll<HTMLElement>('.ap3d-step'))
-        const snap = () => {
-          const still = m.createSculpture(true)
-          hosts.forEach((h) => {
-            const i = Number(h.dataset.step)
-            const img = h.querySelector('img')
-            if (!img || !h.clientWidth) return
-            still.s = i
-            still.setTarget(i)
-            img.src = stage.snapshot(still, h.clientWidth, h.clientHeight)
-            h.classList.add('is-ready')
-          })
-          still.dispose()
+        // still images for reduced motion
+        await m.logosReady()
+        await document.fonts?.ready
+        if (cancelled || !img) return
+        const shots: string[] = []
+        const w = host.clientWidth || 800
+        const h = host.clientHeight || 560
+        for (let i = 0; i < 5; i++) {
+          const v = m.createProcess(true, i)
+          shots.push(stage.snapshot(v, w, h))
+          v.dispose()
         }
-        if (document.fonts) document.fonts.ready.then(() => !cancelled && snap())
-        else snap()
-        if (mode === 'live') {
-          const sc = m.createSculpture()
-          hosts.forEach((h) => {
-            const i = Number(h.dataset.step)
-            const off = stage.register({
-              el: h,
-              view: sc,
-              onActive: (on) => {
-                h.classList.toggle('is-live', on)
-                if (on) {
-                  // arrive from the previous step so the transformation and focal moment play here too
-                  gsap.killTweensOf(sc)
-                  sc.s = Math.max(-1, i - 1)
-                  goSculpt(sc, i)
-                }
-              },
-            })
-            cleanups.push(off)
-          })
-          cleanups.push(() => {
-            gsap.killTweensOf(sc)
-            sc.dispose()
-          })
+        const show = (i: number) => {
+          img.src = shots[i]
         }
+        show(active.current)
+        handle.current = { setStep: show }
+        host.classList.add('is-ready', 'is-still')
+        cleanups.push(() => (handle.current = null))
       })
       .catch(() => disable3D())
     return () => {
       cancelled = true
       cleanups.forEach((f) => f())
     }
-  }, [root, live, handle, active])
+  }, [root, handle, active, mode])
+  return mode
 }

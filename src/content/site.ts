@@ -177,23 +177,33 @@ export const site = {
   approach: [
     {
       title: 'Map the workflow',
+      tab: 'Map the workflow',
       body: 'User flows and information architecture first, so complex products have a clear structure before any pixels.',
+      tools: ['Figma', 'Claude', 'ChatGPT'],
     },
     {
       title: 'Shape it in low fidelity',
+      tab: 'Shape in low fidelity',
       body: 'Wireframes to test hierarchy and layout decisions quickly with clients and development teams.',
+      tools: ['Figma', 'Figma AI'],
     },
     {
       title: 'Prototype the interaction',
+      tab: 'Prototype the interaction',
       body: 'Interactive prototypes that make the product tangible and surface edge cases early.',
+      tools: ['Figma', 'Framer'],
     },
     {
       title: 'Systemise',
+      tab: 'Systemise',
       body: 'Reusable components and Auto Layout design systems that keep every screen consistent as the product grows.',
+      tools: ['Figma', 'Auto Layout', 'Variables'],
     },
     {
       title: 'Hand off cleanly',
+      tab: 'Hand off cleanly',
       body: 'Developer-ready, responsive specs and components — designed to be built, not just presented.',
+      tools: ['Figma Dev Mode', 'Webflow', 'Cursor'],
     },
   ],
 }

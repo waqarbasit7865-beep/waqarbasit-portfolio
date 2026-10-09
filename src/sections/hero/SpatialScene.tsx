@@ -34,10 +34,11 @@ const tools = [
   ['Framer','F','web'],['Webflow','W','web'],['WordPress','W','web'],['Wix','Wix','web'],
   ['Unity','◇','build'],['Godot','G','build'],['Photoshop','Ps','design'],['Illustrator','Ai','design'],
 ]
-const iconFiles: Record<string,string> = {Figma:'figma',Claude:'claude',Framer:'framer',Webflow:'webflow',WordPress:'wordpress',Wix:'wix',Unity:'unity',Godot:'godotengine',ChatGPT:'openai',Midjourney:'midjourney'}
+/* official logos, bundled locally (see public/brand/SOURCES.txt) */
+const iconFiles: Record<string,string> = {Figma:'figma',Claude:'claude',Framer:'framer',Webflow:'webflow',WordPress:'wordpress',Wix:'wix',Unity:'unity',Godot:'godot',ChatGPT:'chatgpt',Midjourney:'midjourney',Photoshop:'photoshop',Illustrator:'illustrator'}
 export function ToolConstellation() {
   return <div className="tool-constellation" aria-label="Design and development tools">
     <div className="tool-constellation__rail" aria-hidden="true" />
-    {tools.map(([name,mark,category],i)=><span key={name} className="tool-token" style={{'--n':i} as CSSProperties}><span className="tool-token__mark" aria-hidden="true">{iconFiles[name] ? <img src={`/tools/${iconFiles[name]}.svg`} alt="" width="20" height="20" /> : mark}</span><span>{name}<small>{category}</small></span></span>)}
+    {tools.map(([name,mark,category],i)=><span key={name} className="tool-token" style={{'--n':i} as CSSProperties}><span className="tool-token__mark" aria-hidden="true">{iconFiles[name] ? <img src={`/brand/${iconFiles[name]}.svg`} alt="" width="20" height="20" /> : mark}</span><span>{name}<small>{category}</small></span></span>)}
   </div>
 }

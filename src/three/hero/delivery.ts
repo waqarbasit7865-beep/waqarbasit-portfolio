@@ -5,8 +5,9 @@
  * in the same instant — one system, adapted to each breakpoint. Interface concept with sample content.
  */
 import * as THREE from 'three'
-import { COL, FONT, MONO, GlowPath, canvasTexture, label, lerp, outBack, outCubic, inOutCubic, plane, rr, roundedBox, satin, seg, haloSprite, type Quality } from '../kit'
+import { COL, FONT, MONO, GlowPath, canvasTexture, lerp, outBack, outCubic, inOutCubic, plane, rr, roundedBox, satin, seg, haloSprite, type Quality } from '../kit'
 import { WIN, type Comp, type Ctx } from './common'
+import { crispLabel } from './tools'
 
 type Layout = 'desktop' | 'tablet' | 'phone'
 const ACC = ['#2F5BFF', '#8E7CFF']
@@ -193,8 +194,8 @@ export class DeliveryComp implements Comp {
     const cube = new THREE.Mesh(roundedBox(0.34, 0.34, 0.34, 0.07), satin(COL.blue, { emissive: new THREE.Color('#2443ff'), emissiveIntensity: 0.8, clearcoat: 1, clearcoatRoughness: 0.05 }))
     cube.rotation.set(0.6, 0.7, 0)
     this.core.add(haloSprite('#4d6fff', 1.4, 0.45), cube)
-    this.coreLabel = label('Design system', 0.1, { size: 42, weight: 500, color: '#c9d3ee', font: '"Geist Mono Variable", ui-monospace, monospace' })
-    this.coreLabel.position.set(0, 0.36, 0)
+    this.coreLabel = crispLabel('Design system', 0.12, '#E3E9FA', 600)
+    this.coreLabel.position.set(0, 0.4, 0)
     this.core.add(this.coreLabel)
     this.core.position.set(0.25, 1.55, 0.2)
     this.rig.add(this.core)

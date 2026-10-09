@@ -28,8 +28,8 @@ export interface HeroOptions {
   env: THREE.Texture
   solo?: number | null
   still?: boolean
-  /** free space (host px) for each scene; stage mode only */
-  measure?: () => (Region | null)[]
+  /** free space (host px) for each scene, plus the "Clear" underline position; stage mode only */
+  measure?: () => { regions: (Region | null)[]; underline: { x: number; y: number } | null }
   /** current scroll-timeline time; stage mode only */
   time?: () => number
 }
@@ -47,7 +47,7 @@ export class HeroWorld implements View3D {
   private still: boolean
   private size = { w: 1, h: 1 }
   private pointer = { x: 0, y: 0, tx: 0, ty: 0 }
-  private measure?: () => (Region | null)[]
+  private measure?: HeroOptions['measure']
   private handoff: Record<string, THREE.Vector3> = {}
   private active = false
   private quality: Quality
@@ -121,7 +121,8 @@ export class HeroWorld implements View3D {
     const { w, h } = this.size
     const visH = 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.camera.position.z
     const wpp = visH / h
-    const regions = this.solo !== null || !this.measure ? null : this.measure()
+    const m = this.solo !== null || !this.measure ? null : this.measure()
+    const regions = m?.regions ?? null
     this.comps.forEach((c, i) => {
       if (!c) return
       const r: Region = regions?.[i] ?? { x: w * 0.06, y: h * 0.06, w: w * 0.88, h: h * 0.88 }
@@ -131,7 +132,12 @@ export class HeroWorld implements View3D {
       c.group.position.set(cx, cy, 0)
       c.group.scale.setScalar(Math.max(0.28, Math.min(s, 1.3)))
     })
-    this.waves.fit(visH * (w / h) * 1.35, -visH * 0.12)
+    // waves: from the underline (left) into the engine (right)
+    const toY = (py: number) => -(py - h / 2) * wpp
+    const intro = this.comps[0]
+    const yRight = intro ? intro.group.position.y : 0
+    const yLeft = m?.underline ? toY(m.underline.y) : yRight - visH * 0.08
+    this.waves.fit(visH * (w / h), yLeft, yRight)
   }
 
   update(dt: number, elapsed: number) {
