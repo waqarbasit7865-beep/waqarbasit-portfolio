@@ -119,9 +119,17 @@ export function FlowGraphic() {
               <i>{String(i + 1).padStart(2, '0')}</i> {n.label}
             </span>
             <span className="flownode__skel">
-              {Array.from({ length: n.lines }, (_, k) => (
-                <b key={k} style={{ width: `${88 - ((k * 23) % 50)}%` }} />
-              ))}
+              <strong>{['Workspace / Overview', 'Navigation', 'Weekly activity', 'Project status', 'Your next steps'][i]}</strong>
+              {i === 2 ? <span className="mini-chart">{[36,65,48,85,60,95].map((h,k)=><i key={k} style={{height:`${h}%`}} />)}</span> :
+                <span className="flow-detail">{[
+                  'Design workspace',
+                  'Overview · Projects · Team',
+                  '',
+                  'In review · Ready',
+                  'Review wireframes → Share prototype',
+                ][i]}</span>}
+              {i === 3 && <span className="mini-ring" />}
+
             </span>
           </div>
         ))}
@@ -173,18 +181,18 @@ export function CraftBoard() {
           ))}
         </div>
         <div className="craft__item craft__btn" aria-hidden="true">
-          <span>Button</span>
+          <span>Publish design ↗</span>
         </div>
         <div className="craft__item craft__toggle" aria-hidden="true">
           <span />
         </div>
         <div className="craft__item craft__input" aria-hidden="true">
-          <span>Input · 48px</span>
+          <span>Search components…</span>
         </div>
         <div className="craft__item craft__card" aria-hidden="true">
-          <b />
-          <b />
-          <b />
+          <strong className="craft-card-title">Project overview</strong>
+          <span className="craft-card-copy">A consistent system.<br />A clearer experience.</span>
+          <span className="craft-card-status">● Ready for review</span>
           <span className="craft__redline">
             <i>24</i>
           </span>

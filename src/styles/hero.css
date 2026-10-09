@@ -59,6 +59,11 @@
     radial-gradient(55% 55% at 50% 44%, rgba(47, 91, 255, 0.3), transparent 72%),
     radial-gradient(40% 40% at 84% 86%, rgba(124, 92, 255, 0.12), transparent 70%);
 }
+/* Fade each atmosphere panel at its boundaries in the stacked mobile layout. */
+.hero:not(.hero--pinned) .light {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 78%, transparent);
+}
 .hero--pinned .light {
   top: 0;
   height: 100%;

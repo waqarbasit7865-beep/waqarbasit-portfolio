@@ -3,9 +3,10 @@ import { site } from '../content/site'
 import { SplitWords } from '../components/SplitWords'
 import { pad } from '../lib/content'
 import { gsap, ScrollTrigger, MOTION_OK, PLAY_ONCE } from '../lib/gsap'
-import { useIsoLayoutEffect } from '../lib/hooks'
+import { useIsoLayoutEffect, useMedia } from '../lib/hooks'
 import { Canvas } from './approach/Canvas'
 import { ALL, STATES, clusters, type ElId, type StateGeo } from './approach/states'
+import { goSculpt, useApproach3D, type SculptHandle } from './approach/use3d'
 
 const LIVE = '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
 
@@ -19,6 +20,11 @@ export function Approach() {
   const liveRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(-1)
   const steps = site.approach
+  /* 3D process sculpture: follows the same active step as the text */
+  const sculpt = useRef<SculptHandle | null>(null)
+  const activeRef = useRef(-1)
+  const live = useMedia(LIVE)
+  useApproach3D(root, live, sculpt, activeRef)
 
   useIsoLayoutEffect(() => {
     const el = root.current
@@ -37,9 +43,11 @@ export function Approach() {
             if (self.isActive) {
               setActive(i)
               goTo(i)
+              activeRef.current = i
+              goSculpt(sculpt.current, i)
             }
           },
-          onLeaveBack: i === 0 ? () => (setActive(-1), goTo(-1)) : undefined,
+          onLeaveBack: i === 0 ? () => (setActive(-1), goTo(-1), (activeRef.current = -1), goSculpt(sculpt.current, -1)) : undefined,
         }),
       )
 
@@ -211,6 +219,9 @@ export function Approach() {
                 <h3 className="ap-step__title">{s.title}</h3>
                 <p className="ap-step__body">{s.body}</p>
                 <div className="ap-step__visual">
+                  <div className="ap3d-step" data-step={i} aria-hidden="true">
+                    <img alt="" decoding="async" />
+                  </div>
                   <Canvas state={i} />
                   <p className="ap-cap">Illustrative process</p>
                 </div>
@@ -220,6 +231,7 @@ export function Approach() {
 
           <div className="ap-aside">
             <div className="ap-sticky">
+              <div className="ap3d" aria-hidden="true" />
               <Canvas ref={liveRef} state={-1} live />
               <p className="ap-cap">
                 Illustrative process
@@ -324,8 +336,8 @@ function Playground() {
           <div className="sp-row">
             <span className="sp-avatar" aria-hidden="true" />
             <div>
-              <div className="sp-line sp-line--strong" />
-              <div className="sp-line sp-line--short" />
+              <strong>Design workspace</strong>
+              <p className="sp-caption">Weekly activity · Sample data</p>
             </div>
             <span className="sp-badge">Active</span>
           </div>
@@ -336,11 +348,11 @@ function Playground() {
           </div>
         </div>
         <div className="sp-card sp-form">
-          <span className="sp-label">Label</span>
-          <span className="sp-input">Input field</span>
+          <span className="sp-label">Project name</span>
+          <span className="sp-input">Customer workspace</span>
           <div className="sp-actions">
-            <span className="sp-btn sp-btn--primary">Primary</span>
-            <span className="sp-btn">Secondary</span>
+            <span className="sp-btn sp-btn--primary">Create project</span>
+            <span className="sp-btn">Save draft</span>
           </div>
         </div>
         <div className="sp-chips">

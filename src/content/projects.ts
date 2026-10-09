@@ -18,14 +18,14 @@
  *      UCL Energy  https://www.behance.net/gallery/253253561/Live-Project-Showcase-UCL-Energy-Website-Case-study
  *  • Nova Flare Connect was not found on Behance or Contra → placeholders remain.
  *
- *  Images marked `source: 'behance'` are hotlinked from Behance's CDN. Before launch, download them
- *  from your own Behance projects, run `npm run images`, and switch `src` to the local files.
+ *  Published images are stored locally under public/projects. UCL screenshots are pre-cropped
+ *  from the original case-study board so the gallery has no third-party image dependency.
  */
 import type { ImageAsset, Project } from './types'
 import { placeholder, todo } from './types'
 
 /** Builds a Behance-hosted image entry from the exact module URL published on Behance. */
-const BH = 'https://mir-s3-cdn-cf.behance.net/project_modules/'
+const BH = '/projects/'
 const behance = (
   file: string,
   width: number,
@@ -34,12 +34,11 @@ const behance = (
   extra: Partial<ImageAsset> = {},
 ): ImageAsset => ({
   kind: 'image',
-  src: `${BH}1400_webp/${file}`,
-  srcSet: `${BH}1400_webp/${file} 1400w, ${BH}2800_webp/${file} 2800w`,
+  src: `${BH}${file.replace(/\.jpg$/, '.webp')}`,
   width,
   height,
   alt,
-  source: 'behance',
+  source: 'local',
   ...extra,
 })
 
@@ -67,11 +66,12 @@ const XM = {
 
 /* UCL Energy — one long published case-study board (1400×10267); crops show parts of it without stretching */
 const UCL_FILE = '7bd128253253561.6a63c57c06928.jpg'
-const ucl = (alt: string, crop: ImageAsset['crop'], caption?: string) =>
-  behance(UCL_FILE, 1400, 10267, alt, { crop, caption })
+const ucl = (alt: string, crop: ImageAsset['crop'], caption?: string): ImageAsset => ({
+  kind: 'image', src: `/projects/ucl-${crop!.y}.webp`, width: crop!.w, height: crop!.h, alt, caption,
+})
 const UCL = {
   home: ucl('UCL Energy homepage design: aerial photo of a ship with the headline "When Excellence Matters"', { x: 66, y: 6840, w: 1260, h: 700 }, 'Homepage — primary entry point'),
-  pages: ucl('Four UCL Energy inner page designs side by side', { x: 66, y: 7545, w: 1260, h: 640 }, 'Inner pages'),
+  pages: { kind: 'image', src: '/projects/ucl-pages-full.webp', width: 1285, height: 590, alt: 'Four UCL Energy inner page designs side by side with their captions', caption: 'Inner pages' } as ImageAsset,
   title: ucl('UCL Energy case-study title board: Corporate Website Design for a Global Energy Enterprise', { x: 0, y: 0, w: 1400, h: 830 }, 'Case-study cover'),
   overview: ucl('Project overview board with the homepage shown on a laptop-style frame', { x: 0, y: 847, w: 1400, h: 680 }, 'Project overview'),
   ia: ucl('Information architecture list beside a seven-step user flow from landing to business inquiry', { x: 0, y: 3880, w: 1400, h: 860 }, 'Information architecture and user flow'),
@@ -113,6 +113,11 @@ export const projects: Project[] = [
     summary: 'A laboratory consulting and doctor appointment app for labs, doctors and patients — booking, ordering and payments in one place.',
     status: 'published',
     composition: 'mobile',
+    showcase: [
+      { kind: 'phone', src: '/projects/screens/soundlab-courses.webp', width: 390, height: 860, alt: 'SoundLab lab courses screen' },
+      { kind: 'phone', src: '/projects/screens/soundlab-home.webp', width: 390, height: 857, alt: 'SoundLab home screen with consulting services, reminders and doctors on duty' },
+      { kind: 'phone', src: '/projects/screens/soundlab-splash.webp', width: 390, height: 853, alt: 'SoundLab splash screen' },
+    ],
     brand: { accent: '#F0574A', onAccent: '#1A0503', surface: '#170D0C' },
     cover: SL.trio,
     heroScreens: [SL.single, SL.three],
@@ -151,6 +156,11 @@ export const projects: Project[] = [
     summary: 'A fintech app for digital payments, transfers and deposits — onboarding, QR payments, wallet recharge and a dashboard, built on one component system.',
     status: 'published',
     composition: 'mobile',
+    showcase: [
+      { kind: 'phone', src: '/projects/screens/xmoney-splash.webp', width: 390, height: 867, alt: 'X Money splash screen' },
+      { kind: 'phone', src: '/projects/screens/xmoney-dashboard.webp', width: 390, height: 867, alt: 'X Money dashboard with balance, frozen amount and security deposit' },
+      { kind: 'phone', src: '/projects/screens/xmoney-signup.webp', width: 390, height: 869, alt: 'X Money sign-up form' },
+    ],
     brand: { accent: '#C59BFF', onAccent: '#1A0B2B', surface: '#130E1B' },
     cover: XM.qr,
     heroScreens: [XM.splash, XM.c],
@@ -191,6 +201,10 @@ export const projects: Project[] = [
     summary: 'A corporate website redesign for an international energy, shipping and offshore group — built to communicate trust and guide visitors to an inquiry.',
     status: 'published',
     composition: 'website',
+    showcase: [
+      { kind: 'laptop', src: '/projects/ucl-6840.webp', width: 1260, height: 700, alt: 'UCL Energy homepage design' },
+      { kind: 'browser', src: '/projects/screens/ucl-renewables.webp', width: 298, height: 496, alt: 'UCL Energy Renewables & Power page design' },
+    ],
     brand: { accent: '#D6A64A', onAccent: '#1A1203', surface: '#0B1828' },
     cover: UCL.home,
     heroScreens: [UCL.pages],

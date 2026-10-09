@@ -51,6 +51,12 @@ export const site = {
         headline: ['AI-assisted exploration.', '*Human-led* design.'],
         tags: [],
       },
+      {
+        id: 'delivery',
+        name: 'Ready to build',
+        headline: ['One system.', 'Every *screen.*'],
+        tags: ['Responsive design', 'Component libraries', 'Developer handoff'],
+      },
     ],
   },
 

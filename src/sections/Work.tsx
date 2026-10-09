@@ -89,6 +89,10 @@ export function Work() {
             .fromTo(q('.wg-aperture__inner'), { scale: 1.07 }, { scale: 1, duration: 0.85 }, 0.1)
             .fromTo(q('.wg-num, .wg-title'), { y: 28 }, { y: 0, duration: 0.7, stagger: 0.08 }, 0.2)
             .fromTo(q('.wg-support'), { y: 46 }, { y: 0, duration: 0.8, stagger: 0.12 }, 0.25)
+          // banner devices settle from a lifted, spread pose into the resting composition
+          const stage = item.querySelector<HTMLElement>('.pstage')
+          if (stage)
+            gsap.fromTo(stage, { '--sp': 0 }, { '--sp': 1, ease: 'none', scrollTrigger: { trigger: item, start: 'top 95%', end: 'top 35%', scrub: 0.8 } })
           // 4: supporting visuals drift a little independently across the whole pass (restrained depth)
           gsap.fromTo(
             q('.wg-support__inner'),
@@ -99,6 +103,34 @@ export function Work() {
       })
     }, el)
     return () => ctx.revert()
+  }, [])
+
+  /* ── Restrained pointer tilt of the banner devices (fine pointer, motion allowed) ── */
+  useEffect(() => {
+    const el = root.current
+    if (!el || !window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)').matches) return
+    const stages = Array.from(el.querySelectorAll<HTMLElement>('.wg-item .pstage'))
+    const offs = stages.map((st) => {
+      const tx = gsap.quickTo(st, '--tx', { duration: 0.9, ease: 'power3.out' })
+      const ty = gsap.quickTo(st, '--ty', { duration: 0.9, ease: 'power3.out' })
+      const move = (e: PointerEvent) => {
+        const r = st.getBoundingClientRect()
+        tx(Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1)))
+        ty(Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1)))
+      }
+      const leave = () => {
+        tx(0)
+        ty(0)
+      }
+      st.addEventListener('pointermove', move)
+      st.addEventListener('pointerleave', leave)
+      return () => {
+        st.removeEventListener('pointermove', move)
+        st.removeEventListener('pointerleave', leave)
+        gsap.killTweensOf(st)
+      }
+    })
+    return () => offs.forEach((f) => f())
   }, [])
 
   if (projects.length === 0) return null

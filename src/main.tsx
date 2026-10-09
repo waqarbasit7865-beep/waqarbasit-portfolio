@@ -11,8 +11,15 @@ import './styles/sections.css'
 import './styles/approach.css'
 import './styles/work.css'
 import './styles/project.css'
+import './styles/upgrade.css'
+import './styles/three.css'
+import './styles/showcase.css'
 import './lib/gsap'
 import { router } from './App'
+import { hasWebGL } from './three/support'
+
+// Decide once, before first paint, whether the 3D layer replaces the HTML illustrations
+document.documentElement.classList.add(hasWebGL() ? 'has-3d' : 'no-3d')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

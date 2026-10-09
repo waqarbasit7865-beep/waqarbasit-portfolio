@@ -67,10 +67,13 @@ function Img({
   vtStyle: CSSProperties
   ratio: string
 }) {
-  const [failed, setFailed] = useState(false)
+  // If one srcset candidate is missing (e.g. a larger variant that was never generated), retry with the
+  // plain src before showing the fallback panel.
+  const [stage, setStage] = useState<0 | 1 | 2>(visual.srcSet ? 0 : 1)
+  const failed = stage === 2
   const common = {
     src: visual.src,
-    srcSet: visual.srcSet,
+    srcSet: stage === 0 ? visual.srcSet : undefined,
     sizes,
     width: visual.width,
     height: visual.height,
@@ -78,7 +81,7 @@ function Img({
     loading: (priority ? 'eager' : 'lazy') as 'eager' | 'lazy',
     decoding: 'async' as const,
     fetchPriority: (priority ? 'high' : 'auto') as 'high' | 'auto',
-    onError: () => setFailed(true),
+    onError: () => setStage((s) => (s === 0 ? 1 : 2)),
   }
 
   if (failed) {

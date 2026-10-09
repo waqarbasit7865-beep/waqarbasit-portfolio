@@ -84,6 +84,15 @@ export interface BrandTheme {
 /** How the gallery composes the project's visuals */
 export type Composition = 'dashboard' | 'mobile' | 'website'
 
+/** One real screen placed in a modelled device for the Selected Work banner (a crop of the project's own published image) */
+export interface ShowcaseDevice {
+  kind: 'phone' | 'laptop' | 'browser'
+  src: string
+  width: number
+  height: number
+  alt: string
+}
+
 export interface Project {
   /** URL slug → /work/<slug>. Lowercase, hyphens only. */
   slug: string
@@ -100,6 +109,8 @@ export interface Project {
   year?: string
   /** Gallery composition — chosen from the real content type, never forced */
   composition: Composition
+  /** Optional banner composition: real screens in device mockups (Selected Work card + case-study header) */
+  showcase?: ShowcaseDevice[]
   /** Main image — used on the homepage card and as the hero of the detail page (shared-element transition) */
   cover: Visual
   /** 1–3 supporting screens that stagger in on the homepage card and hero */

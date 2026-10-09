@@ -295,14 +295,16 @@ section:focus {
   --fg: #fff;
   --fill: var(--paper);
 }
-.btn--primary:hover {
+.btn--primary:hover,
+.btn--primary:focus-visible {
   color: var(--ink);
 }
 .btn--ghost {
   border: 1px solid var(--line-strong);
   --fill: var(--paper);
 }
-.btn--ghost:hover {
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
   color: var(--ink);
   border-color: var(--paper);
 }
@@ -311,7 +313,8 @@ section:focus {
   --fg: var(--on-accent);
   --fill: var(--paper);
 }
-.btn--accent:hover {
+.btn--accent:hover,
+.btn--accent:focus-visible {
   color: var(--ink);
 }
 .btn--light {
@@ -319,7 +322,8 @@ section:focus {
   --fg: var(--ink);
   --fill: var(--blue);
 }
-.btn--light:hover {
+.btn--light:hover,
+.btn--light:focus-visible {
   color: #fff;
 }
 .btn--sm {

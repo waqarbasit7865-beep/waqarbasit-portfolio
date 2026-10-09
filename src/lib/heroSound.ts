@@ -105,6 +105,11 @@ export class HeroSound {
       osc('sawtooth', 293.66, 0.5, lp)
       osc('sawtooth', 440, 0.35, lp)
       end = env(0.6, 0.03, 0.75)
+    } else if (scene === 4) {
+      osc('sine', 392, 0.6)
+      osc('sine', 493.88, 0.45)
+      osc('sine', 587.33, 0.35)
+      end = env(0.7, 0.025, 0.85)
     } else {
       // shimmering detuned sines with gentle vibrato — "AI + human"
       const lfo = ctx.createOscillator()

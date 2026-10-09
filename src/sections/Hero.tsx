@@ -3,12 +3,14 @@ import { site } from '../content/site'
 import { toolMarks } from '../content/toolMarks'
 import { ArrowRight, ArrowUpRight, Download } from '../components/Icons'
 import { gsap, ScrollTrigger, MOTION_OK, PLAY_ONCE } from '../lib/gsap'
-import { useIsoLayoutEffect } from '../lib/hooks'
+import { useIsoLayoutEffect, useMedia } from '../lib/hooks'
 import { scrollToId } from '../lib/nav'
 import { HeroSound } from '../lib/heroSound'
 import { CraftBoard, FlowGraphic, FlowLines, GridField, ToolMarks, FLOW_NODES, MARK_POS, boxStyle } from './hero/visuals'
 import { IntroWaves, StudioVisual } from './hero/studio'
+import { SpatialScene, ToolConstellation } from './hero/SpatialScene'
 import { SHOW_DRAFTS } from '../lib/content'
+import { useHero3D } from './hero/use3d'
 
 const SCENES = site.hero.scenes
 /** Scene 1 professional-profile links, reused from site.links */
@@ -16,13 +18,14 @@ const PROFILES = ['LinkedIn', 'Upwork']
   .map((label) => site.links.find((l) => l.label === label))
   .filter((l): l is (typeof site.links)[number] => Boolean(l))
 /** Timeline label times (scene dwell positions) and the scene boundaries used for the progress indicator */
-const LABELS = [0, 3.05, 5.0, 7.6]
-const BOUNDS = [1.48, 3.66, 5.86]
+const LABELS = [0, 3.05, 5.0, 7.35, 9.4]
+const BOUNDS = [1.48, 3.66, 5.86, 8.05]
 /** Transition zones (timeline time). Stopping inside one snaps to its edge in the scroll direction. */
 const ZONES: [number, number][] = [
   [1, 2.2],
   [3.2, 4.4],
   [5.4, 6.9],
+  [7.65, 8.65],
 ]
 const sceneAt = (t: number) => BOUNDS.filter((b) => t >= b).length
 
@@ -64,6 +67,18 @@ function Headline({ lines, id, as: Tag = 'h2', underline }: { lines: string[]; i
   )
 }
 
+/** Honest labels for the 3D illustrations, per scene */
+const CAPS = ['', 'Process illustration · sample user flow', 'Illustrative elements — not client work', 'Interface concept · AI-assisted, human-led', 'Interface concept · one system, every screen']
+
+/** Stacked-layout slot for one scene's 3D composition (still image first; the live canvas joins when in view) */
+function Slot3D({ i }: { i: number }) {
+  return (
+    <div className="hx3d-slot" data-slot={i} aria-hidden="true">
+      <img className="hx3d-still" alt="" decoding="async" />
+    </div>
+  )
+}
+
 export function Hero() {
   const root = useRef<HTMLElement>(null)
   const stRef = useRef<ScrollTrigger | null>(null)
@@ -71,6 +86,10 @@ export function Hero() {
   const [scene, setScene] = useState(0)
   const [soundOn, setSoundOn] = useState(false)
   const sound = useRef<HeroSound | null>(null)
+  /* 3D layer: the scroll timeline writes its time here; the WebGL world reads it every frame */
+  const [time3d] = useState(() => ({ T: 0 }))
+  const pinned = useMedia(PINNED)
+  useHero3D(root, pinned, time3d)
 
   const updateScene = useCallback((i: number) => {
     if (i === sceneRef.current) return
@@ -150,9 +169,9 @@ export function Hero() {
             at,
           )
 
-        const S = (id: string, sel = '') => q(`.scene--${id}${sel ? ' ' + sel : ''}`)
+        const S = (id: string, sel = '') => q(sel ? sel.split(',').map(part => `.scene--${id} ${part.trim()}`).join(',') : `.scene--${id}`)
         // Initial pinned state: only scene 1 visible
-        gsap.set([S('product'), S('craft'), S('ai')], { autoAlpha: 0 })
+        gsap.set([S('product'), S('craft'), S('ai'), S('delivery')], { autoAlpha: 0 })
 
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
         tl.addLabel('s0', LABELS[0])
@@ -161,6 +180,7 @@ export function Hero() {
         tl.to(S('intro', '.scene__copy'), { xPercent: -14, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
           // Scene 1 visual + waves leave with the copy and are gone (1.45) before scene 2 is shown (1.47)
           .to(S('intro', '.hx-studio'), { xPercent: 22, scale: 0.92, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
+          .to(S('intro', '.hero-tool-orbit'), { autoAlpha: 0, z: -120, duration: 0.45 }, 1)
           .to(S('intro', '.hx-waves'), { autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
           .to(q('.light--0'), { opacity: 0, duration: 1 }, 1)
           .to(q('.light--1'), { opacity: 1, duration: 1 }, 1)
@@ -218,12 +238,18 @@ export function Hero() {
           // calm final arrangement: the two AI marks settle down a touch before release
           .to(q('.mark--claude, .mark--chatgpt'), { opacity: 0.28, scale: 1.2, duration: 0.5 }, 7.05)
           .addLabel('s3', LABELS[3])
-          .set({}, {}, LABELS[3]) // fixes the timeline length so the last label is the release point
+          .fromTo(S('ai', '.spatial'), { y: 60, rotationY: -18, autoAlpha: 0 }, { y: 0, rotationY: 0, autoAlpha: 1, duration: 0.8 }, 6.0)
+        tl.to(S('ai'), { autoAlpha: 0, y: -50, duration: 0.4 }, 7.65)
+          .set(S('delivery'), { autoAlpha: 1 }, 8.05)
+          .fromTo(S('delivery', '.hx-line'), { yPercent: 110 }, { yPercent: 0, duration: 0.6, stagger: 0.12 }, 8.06)
+          .fromTo(S('delivery', '.hx-eyebrow, .hx-tags, .hx-cta'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 }, 8.15)
+          .fromTo(S('delivery', '.spatial'), { rotationY: 25, z: -160, autoAlpha: 0 }, { rotationY: 0, z: 0, autoAlpha: 1, duration: 0.8 }, 8.06)
+          .addLabel('s4', LABELS[4]).set({}, {}, LABELS[4])
 
         const st = ScrollTrigger.create({
           trigger: el,
           start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * 3.4)}`,
+          end: () => `+=${Math.round(window.innerHeight * 4.3)}`,
           pin: true,
           pinSpacing: true,
           scrub: 0.7,
@@ -250,7 +276,11 @@ export function Hero() {
           onUpdate: (self) => updateScene(sceneAt(self.progress * tl.duration())),
         })
         stRef.current = st
+        tl.eventCallback('onUpdate', () => {
+          time3d.T = tl.time()
+        })
         return () => {
+          time3d.T = 0
           stRef.current = null
           el.classList.remove('hero--pinned')
           paths.forEach((p) => p.setAttribute('d', p.dataset.grid || ''))
@@ -259,7 +289,7 @@ export function Hero() {
 
       /* ── Mobile / short screens: lighter vertical sequence, each scene animates on entry ── */
       mm.add(FLOW_MOTION, () => {
-        const S = (id: string, sel = '') => q(`.scene--${id}${sel ? ' ' + sel : ''}`)
+        const S = (id: string, sel = '') => q(sel ? sel.split(',').map(part => `.scene--${id} ${part.trim()}`).join(',') : `.scene--${id}`)
         const on = (id: string) => ({ trigger: S(id)[0], start: 'top 70%', toggleActions: PLAY_ONCE })
         gsap.timeline({ scrollTrigger: on('product') })
           .from(S('product', '.hx-line'), { xPercent: 40, opacity: 0, duration: 0.7, stagger: 0.1, ease: 'expo.out' })
@@ -284,6 +314,7 @@ export function Hero() {
           .from(S('craft', '.hx-line'), { clipPath: 'inset(0% 100% 0% 0%)', duration: 0.7, stagger: 0.12, ease: 'power3.inOut' })
           .from(S('craft', '.craft__item'), { y: -50, autoAlpha: 0, duration: 0.5, stagger: 0.06, ease: 'back.out(1.4)' }, 0.1)
 
+        gsap.from(S('delivery', '.hx-line, .spatial'), { y: 40, opacity: 0, duration: 0.8, stagger: 0.1, scrollTrigger: on('delivery') })
         const paths = S('ai', '.gridfield__path') as unknown as SVGPathElement[]
         paths.forEach((p) => p.setAttribute('d', p.dataset.wave || ''))
         const ai = gsap.timeline({ scrollTrigger: on('ai') })
@@ -302,7 +333,7 @@ export function Hero() {
       })
     }, el)
     return () => ctx.revert()
-  }, [updateScene])
+  }, [updateScene, time3d])
 
   /* ── Pointer parallax on the background marks (pinned desktop, fine pointer) ── */
   useEffect(() => {
@@ -413,7 +444,7 @@ export function Hero() {
       const tl = st.animation as gsap.core.Timeline
       const y = st.start + (LABELS[i] / tl.duration()) * (st.end - st.start)
       // Jump instantly; the scrubbed timeline animates the scenes in between (smooth native scrolling would fight snapping)
-      window.scrollTo({ top: Math.round(y) + (i === 3 ? -2 : 0), behavior: 'auto' })
+      window.scrollTo({ top: Math.round(y) + (i === SCENES.length - 1 ? -2 : 0), behavior: 'auto' })
     } else {
       root.current?.querySelectorAll('.scene')[i]?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
     }
@@ -435,7 +466,7 @@ export function Hero() {
   }
 
   return (
-    <section ref={root} className={`hero${SHOW_DRAFTS ? ' hero--draft' : ''}`} id="top" tabIndex={-1} aria-labelledby="hx-title-0" aria-roledescription="introduction">
+    <section ref={root} data-active-scene={scene} className={`hero${SHOW_DRAFTS ? ' hero--draft' : ''}`} id="top" tabIndex={-1} aria-labelledby="hx-title-0" aria-roledescription="introduction">
       <div className="hero__stage">
         {/* Atmosphere: four lighting states, slow flowing lines, workflow tool marks */}
         <div className="hero__atmos" aria-hidden="true">
@@ -445,11 +476,15 @@ export function Hero() {
           <div className="light light--3" />
           <FlowLines />
         </div>
+        {/* single WebGL view for the pinned desktop intro (the canvas is attached here when this host is active) */}
+        <div className="hx3d" aria-hidden="true" />
+        {CAPS[scene] && <p className={`hx3d-cap hx3d-cap--stage hx3d-cap--${scene === 2 ? 'left' : 'right'}`}>{CAPS[scene]}</p>}
         <ToolMarks />
 
         {/* 01 — Introduction */}
         <div className="scene scene--intro" data-scene="0">
           <IntroWaves paused={scene !== 0} />
+          <div className="hero-tool-orbit" aria-hidden="true"><ToolConstellation /></div>
           <div className="scene__copy">
             <p className="hx-label">
               <span>{site.hero.label}</span>
@@ -475,12 +510,14 @@ export function Hero() {
                 ))}
               </ul>
             )}
+            <ToolConstellation />
             <p className="hx-cue" aria-hidden="true">
               <span className="hx-cue__line" />
               Scroll to explore
             </p>
             {/* positioned against the headline's own geometry, so it never collides with it */}
             <StudioVisual paused={scene !== 0} />
+            <Slot3D i={0} />
           </div>
         </div>
 
@@ -495,14 +532,18 @@ export function Hero() {
           </div>
           <div className="scene__visual">
             <FlowGraphic />
+            <Slot3D i={1} />
           </div>
+          <p className="hx3d-cap hx3d-cap--right">Process illustration · sample user flow</p>
         </div>
 
         {/* 03 — Visual craft */}
         <div className="scene scene--craft" data-scene="2">
           <div className="scene__visual">
             <CraftBoard />
+            <Slot3D i={2} />
           </div>
+          <p className="hx3d-cap hx3d-cap--left">Illustrative elements — not client work</p>
           <div className="scene__copy">
             <p className="hx-eyebrow">03 — {SCENES[2].name}</p>
             <Headline lines={SCENES[2].headline} id="hx-title-2" />
@@ -522,6 +563,19 @@ export function Hero() {
               Explore selected work <ArrowRight />
             </a>
           </div>
+          <div className="scene__visual"><SpatialScene mode="ai" /><Slot3D i={3} /></div>
+          <p className="hx3d-cap hx3d-cap--right">Interface concept · AI-assisted, human-led</p>
+        </div>
+
+        <div className="scene scene--delivery" data-scene="4">
+          <div className="scene__copy">
+            <p className="hx-eyebrow">05 — {SCENES[4].name}</p>
+            <Headline lines={SCENES[4].headline} id="hx-title-4" />
+            <ul className="hx-tags" aria-label="Capabilities">{SCENES[4].tags?.map(t => <li key={t}>{t}</li>)}</ul>
+            <a className="hx-cta btn btn--primary" href="/#work" onClick={toWork}>See it in practice <ArrowRight /></a>
+          </div>
+          <div className="scene__visual"><SpatialScene mode="delivery" /><Slot3D i={4} /></div>
+          <p className="hx3d-cap hx3d-cap--right">Interface concept · one system, every screen</p>
         </div>
 
         {/* HUD: skip, scene progress/controls, sound */}

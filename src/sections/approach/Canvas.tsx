@@ -19,23 +19,25 @@ const bars = (n: number) => (
   </span>
 )
 
+const flowLabels: Partial<Record<ElId,string>> = {B0:'Start',B1:'Explore',B2:'Search',B3:'Review',B4:'Complete',B5:'Continue',n6:'User goal',n7:'Pain point',n8:'Opportunity',n9:'Next step'}
 function inner(id: ElId) {
   switch (id) {
     case 'B0':
       return (
         <span className="cv-bars cv-bars--row">
-          <i className="cv-logo" />
-          <b />
-          <b />
-          <b />
+          <i className="cv-logo" /><span className="cv-workspace-label">Workspace / Overview</span>
         </span>
       )
     case 'B1':
-      return bars(5)
+      return <span className="cv-real cv-nav">Overview<br />Projects<br />Activity<br />Settings</span>
     case 'B4':
-      return bars(4)
+      return <span className="cv-real cv-tasks"><strong>Project checklist</strong><span>✓ Map the workflow</span><span>✓ Review the prototype</span></span>
     case 'B5':
-      return <span className="cv-btn-label" />
+      return <span className="cv-real cv-action">Continue ↗</span>
+    case 'B2':
+      return <span className="cv-real"><strong>Activity</strong><span className="mini-chart">{[42,68,50,86,72].map((h,i)=><i key={i} style={{height:`${h}%`}} />)}</span></span>
+    case 'B3':
+      return <span className="cv-real"><strong>In progress</strong><span className="mini-ring" /></span>
     case 'q1':
     case 'q2':
       return <span className="cv-qmark">?</span>
@@ -57,22 +59,21 @@ function inner(id: ElId) {
     case 'S2':
       return (
         <>
-          <span className="cv-s2-head" />
+          <span className="cv-s2-head">Review changes</span>
           <span className="cv-alert">
             <i>!</i>
             <span className="cv-bars">
-              <b />
-              <b />
+              <small>Check required fields</small>
             </span>
           </span>
-          <span className="cv-s2-btn" />
+          <span className="cv-s2-btn">Try again</span>
         </>
       )
     case 'SP':
       return (
         <>
           <span className="cv-sp-label">Component</span>
-          <span className="cv-master" />
+          <span className="cv-master">Continue ↗</span>
           <span className="cv-swatches">
             <i />
             <i />
@@ -84,10 +85,10 @@ function inner(id: ElId) {
       return (
         <>
           <span className="cv-m-notch" />
-          <span className="cv-m-head" />
-          <span className="cv-m-card" />
-          <span className="cv-m-card" />
-          <span className="cv-m-btn" />
+          <span className="cv-m-head">Workspace</span>
+          <span className="cv-m-card">Your projects</span>
+          <span className="cv-m-card">Recent activity</span>
+          <span className="cv-m-btn">Continue</span>
         </>
       )
     case 'AS':
@@ -129,7 +130,7 @@ export const Canvas = forwardRef<HTMLDivElement, { state: number; live?: boolean
         {/* order matters for stacking: frame, screens, blocks, notes, overlays */}
         {(['F', 'S2', 'M'] as ElId[]).map((id) => (
           <div key={id} className={`cv-el ${kind(id)}`} data-el={id} style={geoStyle(geo[id])}>
-            {inner(id)}
+            {flowLabels[id] && <span className="cv-flow-label">{flowLabels[id]}</span>}{inner(id)}
           </div>
         ))}
         <span className="cv-guide" style={{ left: `${GUIDE_X}%` }} />
@@ -142,7 +143,7 @@ export const Canvas = forwardRef<HTMLDivElement, { state: number; live?: boolean
         </svg>
         {ALL.filter((id) => !['F', 'S2', 'M'].includes(id)).map((id) => (
           <div key={id} className={`cv-el ${kind(id)}`} data-el={id} style={geoStyle(geo[id])}>
-            {inner(id)}
+            {flowLabels[id] && <span className="cv-flow-label">{flowLabels[id]}</span>}{inner(id)}
           </div>
         ))}
         <span className="cv-hot" style={{ left: `${HOTSPOT.x}%`, top: `${HOTSPOT.y}%` }} />
