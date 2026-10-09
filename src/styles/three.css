@@ -158,3 +158,16 @@
 .approach .ap3d.is-still .ap3d__still {
   display: block;
 }
+
+/* Stacked layouts (tablet / mobile): the orbit is drawn small, so the tool list is also shown as readable chips
+   (Figma first and emphasised), right above the 3D composition. */
+.has-3d .hero:not(.hero--pinned) .scene--intro .scene__copy > .tool-constellation {
+  position: relative !important;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  margin-top: 22px;
+}

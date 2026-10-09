@@ -38,7 +38,7 @@ export function useProcess3D(root: RefObject<HTMLElement | null>, handle: { curr
           return
         }
         // still images for reduced motion
-        await m.logosReady()
+        await m.preloadLogos()
         await document.fonts?.ready
         if (cancelled || !img) return
         const shots: string[] = []

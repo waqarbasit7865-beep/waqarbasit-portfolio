@@ -18,15 +18,17 @@ const PROFILES = ['LinkedIn', 'Upwork']
   .map((label) => site.links.find((l) => l.label === label))
   .filter((l): l is (typeof site.links)[number] => Boolean(l))
 /** Timeline label times (scene dwell positions) and the scene boundaries used for the progress indicator */
-const LABELS = [0, 3.05, 5.0, 7.35, 9.4]
+const LABELS = [0, 2.95, 5.25, 7.2, 9.4]
 const BOUNDS = [1.48, 3.66, 5.86, 8.05]
 /** Transition zones (timeline time). Stopping inside one snaps to its edge in the scroll direction. */
 const ZONES: [number, number][] = [
-  [1, 2.2],
+  [1, 2.49],
   [3.2, 4.4],
-  [5.4, 6.9],
+  [5.43, 6.61],
   [7.65, 8.65],
 ]
+/** sound cue per page position (cues are themed: 0 intro, 1 product, 2 craft, 3 AI, 4 delivery) */
+const SOUND_CUE = [0, 3, 1, 2, 4]
 const sceneAt = (t: number) => BOUNDS.filter((b) => t >= b).length
 
 const PINNED = '(min-width: 1024px) and (min-height: 560px) and (prefers-reduced-motion: no-preference)'
@@ -68,7 +70,7 @@ function Headline({ lines, id, as: Tag = 'h2', underline }: { lines: string[]; i
 }
 
 /** Honest labels for the 3D illustrations, per scene */
-const CAPS = ['', 'Process illustration · sample user flow', 'Illustrative elements — not client work', 'Interface concept · AI-assisted, human-led', 'Interface concept · one system, every screen']
+const CAPS = ['', 'Interface concept · AI-assisted, human-led', 'Process illustration · sample user flow', 'Illustrative elements — not client work', 'Interface concept · one system, every screen']
 
 /** Stacked-layout slot for one scene's 3D composition (still image first; the live canvas joins when in view) */
 function Slot3D({ i }: { i: number }) {
@@ -176,7 +178,15 @@ export function Hero() {
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
         tl.addLabel('s0', LABELS[0])
 
-        /* T1 → Product thinking: horizontal hand-off */
+        /* Scene order: 01 Introduction → 02 AI → 03 Product thinking → 04 Visual craft → 05 Delivery.
+           Each scene's choreography is authored on its own time span and placed into its page slot by remap()
+           (the 3D compositions use the same mapping, see three/hero/common.ts). */
+        const remap = (from: [number, number], to: [number, number]) => (t: number) => to[0] + ((t - from[0]) * (to[1] - to[0])) / (from[1] - from[0])
+        const tA = remap([5.88, 8.05], [1.47, 3.65]) // AI → slot 2
+        const tP = remap([1.47, 3.65], [3.66, 5.86]) // product → slot 3
+        const tC = remap([3.66, 5.86], [5.88, 8.05]) // craft → slot 4
+
+        /* slot transitions: lighting states and the background tool marks */
         tl.to(S('intro', '.scene__copy'), { xPercent: -14, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
           // Scene 1 visual + waves leave with the copy and are gone (1.45) before scene 2 is shown (1.47)
           .to(S('intro', '.hx-studio'), { xPercent: 22, scale: 0.92, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
@@ -184,63 +194,65 @@ export function Hero() {
           .to(S('intro', '.hx-waves'), { autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 1)
           .to(q('.light--0'), { opacity: 0, duration: 1 }, 1)
           .to(q('.light--1'), { opacity: 1, duration: 1 }, 1)
-        moveMarks(tl, 1, 1)
-        tl.set(S('product'), { autoAlpha: 1 }, 1.47)
-          .fromTo(S('product', '.hx-eyebrow'), { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5 }, 1.5)
-          .fromTo(S('product', '.hx-line'), { xPercent: 55, opacity: 0 }, { xPercent: 0, opacity: 1, duration: 0.6, stagger: 0.1 }, 1.52)
-          .fromTo(S('product', '.hx-tags li'), { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, stagger: 0.05 }, 1.8)
-          .fromTo(S('product', '.flowgfx'), { xPercent: 28, rotateY: -16, z: -120, autoAlpha: 0 }, { xPercent: 0, rotateY: 0, z: 0, autoAlpha: 1, duration: 0.75 }, 1.5)
-          .fromTo(S('product', '.flownode'), { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, stagger: 0.06, ease: 'back.out(1.6)' }, 1.75)
-          .fromTo(S('product', '.flowgfx__links path'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.45, stagger: 0.05 }, 1.95)
-        /* Dwell 2: flow rearranges into a wireframe while the headline stays put */
-        FLOW_NODES.forEach((n, i) => {
-          tl.to(S('product', `.flownode[data-node="${i}"]`), { ...boxStyle(n.wire), borderRadius: 6, duration: 0.6, ease: 'power3.inOut' }, 2.35 + i * 0.04)
-        })
-        tl.to(S('product', '.flowgfx__links'), { opacity: 0, duration: 0.3 }, 2.3)
-          .to(S('product', '.flownode__label'), { opacity: 0, duration: 0.2 }, 2.3)
-          .to(S('product', '.flownode__skel'), { opacity: 1, duration: 0.3 }, 2.75)
-          .to(S('product', '.flowgfx__caption'), { '--p': 1, duration: 0.6 }, 2.35)
-          .addLabel('s1', LABELS[1])
-
-        /* T2 → Visual craft: recede in depth, then drop the craft elements in */
-        tl.to(S('product', '.scene__copy'), { scale: 0.92, y: -30, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 3.2)
-          .to(S('product', '.flowgfx'), { xPercent: -18, z: -200, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 3.2)
           .to(q('.light--1'), { opacity: 0, duration: 1 }, 3.2)
           .to(q('.light--2'), { opacity: 1, duration: 1 }, 3.2)
-        moveMarks(tl, 2, 3.2)
-        tl.set(S('craft'), { autoAlpha: 1 }, 3.66)
-          .fromTo(S('craft', '.craft__guides span'), { scaleY: 0 }, { scaleY: 1, duration: 0.5, stagger: 0.04, transformOrigin: 'top' }, 3.68)
-          .fromTo(S('craft', '.craft__item'), { y: -90, rotate: (i) => [-6, 5, -4, 7, -3, 4, -5][i % 7], autoAlpha: 0 }, { y: 0, rotate: 0, autoAlpha: 1, duration: 0.55, stagger: 0.07, ease: 'back.out(1.4)' }, 3.75)
-          .fromTo(S('craft', '.viz-tag'), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.2)
-          .fromTo(S('craft', '.hx-eyebrow'), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, 3.75)
-          .fromTo(S('craft', '.hx-line'), { clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, stagger: 0.14, ease: 'power3.inOut' }, 3.8)
-          .fromTo(S('craft', '.hx-tags li'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, stagger: 0.05 }, 4.25)
-          .addLabel('s2', LABELS[2])
-
-        /* T3 → AI + human judgment: lift craft away, draw flowing paths, then organise into a grid */
-        tl.to(S('craft', '.craft__item'), { y: -60, autoAlpha: 0, duration: 0.35, stagger: 0.03, ease: 'power2.in' }, 5.4)
-          .to(S('craft', '.scene__copy'), { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 5.4)
-          .to(S('craft', '.craft__guides, .viz-tag'), { autoAlpha: 0, duration: 0.3 }, 5.5)
           .to(q('.light--2'), { opacity: 0, duration: 1 }, 5.4)
           .to(q('.light--3'), { opacity: 1, duration: 1 }, 5.4)
-        moveMarks(tl, 3, 5.4)
+        moveMarks(tl, 3, 1)
+        moveMarks(tl, 1, 3.2)
+        moveMarks(tl, 2, 5.4)
+
+        /* 02 · AI + human judgment: flowing paths organise into a grid */
         const paths = S('ai', '.gridfield__path') as unknown as SVGPathElement[]
         paths.forEach((p) => p.setAttribute('d', p.dataset.wave || ''))
-        tl.set(S('ai'), { autoAlpha: 1 }, 5.88)
-          .fromTo(paths, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.7, stagger: 0.02, ease: 'power2.out' }, 5.6)
-          .fromTo(S('ai', '.hx-line'), { rotateX: -75, yPercent: 40, opacity: 0, transformOrigin: '50% 100%' }, { rotateX: 0, yPercent: 0, opacity: 1, duration: 0.6, stagger: 0.12 }, 5.92)
-          .fromTo(S('ai', '.hx-eyebrow'), { opacity: 0, letterSpacing: '0.4em' }, { opacity: 1, letterSpacing: '0.08em', duration: 0.5 }, 5.9)
-          .fromTo(S('ai', '.hx-cta'), { y: 24, autoAlpha: 0, scale: 0.94 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.5 }, 6.35)
+        tl.set(S('ai'), { autoAlpha: 1 }, tA(5.88))
+          .fromTo(paths, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.7, stagger: 0.02, ease: 'power2.out' }, tA(5.6))
+          .fromTo(S('ai', '.hx-line'), { rotateX: -75, yPercent: 40, opacity: 0, transformOrigin: '50% 100%' }, { rotateX: 0, yPercent: 0, opacity: 1, duration: 0.6, stagger: 0.12 }, tA(5.92))
+          .fromTo(S('ai', '.hx-eyebrow'), { opacity: 0, letterSpacing: '0.4em' }, { opacity: 1, letterSpacing: '0.08em', duration: 0.5 }, tA(5.9))
+          .fromTo(S('ai', '.hx-tags li'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, stagger: 0.05 }, tA(6.3))
         paths.forEach((p, i) => {
-          tl.to(p, { attr: { d: p.dataset.grid || '' }, duration: 0.8, ease: 'power3.inOut' }, 6.45 + (i % 7) * 0.025)
+          tl.to(p, { attr: { d: p.dataset.grid || '' }, duration: 0.8, ease: 'power3.inOut' }, tA(6.45) + (i % 7) * 0.025)
         })
-        tl.fromTo(S('ai', '.gridfield__node'), { scale: 0, opacity: 0, transformOrigin: 'center' }, { scale: 1, opacity: 1, duration: 0.3, stagger: 0.04 }, 7.0)
-          // calm final arrangement: the two AI marks settle down a touch before release
-          .to(q('.mark--claude, .mark--chatgpt'), { opacity: 0.28, scale: 1.2, duration: 0.5 }, 7.05)
+        tl.fromTo(S('ai', '.gridfield__node'), { scale: 0, opacity: 0, transformOrigin: 'center' }, { scale: 1, opacity: 1, duration: 0.3, stagger: 0.04 }, tA(7.0))
+          .to(q('.mark--claude, .mark--chatgpt'), { opacity: 0.28, scale: 1.2, duration: 0.5 }, tA(7.05))
+          .fromTo(S('ai', '.spatial'), { y: 60, rotationY: -18, autoAlpha: 0 }, { y: 0, rotationY: 0, autoAlpha: 1, duration: 0.8 }, tA(6.0))
+          .addLabel('s1', LABELS[1])
+        tl.to(S('ai'), { autoAlpha: 0, y: -50, duration: 0.38 }, tA(7.65))
+
+        /* 03 · Product thinking: horizontal hand-off, then the flow rearranges into a wireframe */
+        tl.set(S('product'), { autoAlpha: 1 }, tP(1.47))
+          .fromTo(S('product', '.hx-eyebrow'), { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5 }, tP(1.5))
+          .fromTo(S('product', '.hx-line'), { xPercent: 55, opacity: 0 }, { xPercent: 0, opacity: 1, duration: 0.6, stagger: 0.1 }, tP(1.52))
+          .fromTo(S('product', '.hx-tags li'), { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, stagger: 0.05 }, tP(1.8))
+          .fromTo(S('product', '.flowgfx'), { xPercent: 28, rotateY: -16, z: -120, autoAlpha: 0 }, { xPercent: 0, rotateY: 0, z: 0, autoAlpha: 1, duration: 0.75 }, tP(1.5))
+          .fromTo(S('product', '.flownode'), { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, stagger: 0.06, ease: 'back.out(1.6)' }, tP(1.75))
+          .fromTo(S('product', '.flowgfx__links path'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.45, stagger: 0.05 }, tP(1.95))
+        FLOW_NODES.forEach((n, i) => {
+          tl.to(S('product', `.flownode[data-node="${i}"]`), { ...boxStyle(n.wire), borderRadius: 6, duration: 0.6, ease: 'power3.inOut' }, tP(2.35) + i * 0.04)
+        })
+        tl.to(S('product', '.flowgfx__links'), { opacity: 0, duration: 0.3 }, tP(2.3))
+          .to(S('product', '.flownode__label'), { opacity: 0, duration: 0.2 }, tP(2.3))
+          .to(S('product', '.flownode__skel'), { opacity: 1, duration: 0.3 }, tP(2.75))
+          .to(S('product', '.flowgfx__caption'), { '--p': 1, duration: 0.6 }, tP(2.35))
+          .addLabel('s2', LABELS[2])
+        tl.to(S('product', '.scene__copy'), { scale: 0.92, y: -30, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, tP(3.2))
+          .to(S('product', '.flowgfx'), { xPercent: -18, z: -200, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, tP(3.2))
+
+        /* 04 · Visual craft: drop the craft elements in */
+        tl.set(S('craft'), { autoAlpha: 1 }, tC(3.66))
+          .fromTo(S('craft', '.craft__guides span'), { scaleY: 0 }, { scaleY: 1, duration: 0.5, stagger: 0.04, transformOrigin: 'top' }, tC(3.68))
+          .fromTo(S('craft', '.craft__item'), { y: -90, rotate: (i) => [-6, 5, -4, 7, -3, 4, -5][i % 7], autoAlpha: 0 }, { y: 0, rotate: 0, autoAlpha: 1, duration: 0.55, stagger: 0.07, ease: 'back.out(1.4)' }, tC(3.75))
+          .fromTo(S('craft', '.viz-tag'), { opacity: 0 }, { opacity: 1, duration: 0.3 }, tC(4.2))
+          .fromTo(S('craft', '.hx-eyebrow'), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, tC(3.75))
+          .fromTo(S('craft', '.hx-line'), { clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, stagger: 0.14, ease: 'power3.inOut' }, tC(3.8))
+          .fromTo(S('craft', '.hx-tags li'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, stagger: 0.05 }, tC(4.25))
           .addLabel('s3', LABELS[3])
-          .fromTo(S('ai', '.spatial'), { y: 60, rotationY: -18, autoAlpha: 0 }, { y: 0, rotationY: 0, autoAlpha: 1, duration: 0.8 }, 6.0)
-        tl.to(S('ai'), { autoAlpha: 0, y: -50, duration: 0.4 }, 7.65)
-          .set(S('delivery'), { autoAlpha: 1 }, 8.05)
+        tl.to(S('craft', '.craft__item'), { y: -60, autoAlpha: 0, duration: 0.33, stagger: 0.03, ease: 'power2.in' }, tC(5.4))
+          .to(S('craft', '.scene__copy'), { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, tC(5.4))
+          .to(S('craft', '.craft__guides, .viz-tag'), { autoAlpha: 0, duration: 0.3 }, tC(5.5))
+
+        /* 05 · Ready to build */
+        tl.set(S('delivery'), { autoAlpha: 1 }, 8.05)
           .fromTo(S('delivery', '.hx-line'), { yPercent: 110 }, { yPercent: 0, duration: 0.6, stagger: 0.12 }, 8.06)
           .fromTo(S('delivery', '.hx-eyebrow, .hx-tags, .hx-cta'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 }, 8.15)
           .fromTo(S('delivery', '.spatial'), { rotationY: 25, z: -160, autoAlpha: 0 }, { rotationY: 0, z: 0, autoAlpha: 1, duration: 0.8 }, 8.06)
@@ -419,7 +431,7 @@ export function Hero() {
 
   /* ── Sound: one cue per scene change, only after explicit opt-in ── */
   useEffect(() => {
-    if (soundOn) sound.current?.play(scene)
+    if (soundOn) sound.current?.play(SOUND_CUE[scene])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene])
   useEffect(() => () => sound.current?.destroy(), [])
@@ -433,7 +445,7 @@ export function Hero() {
     if (!sound.current) sound.current = new HeroSound()
     const ok = await sound.current.enable()
     setSoundOn(ok)
-    if (ok) sound.current.play(sceneRef.current)
+    if (ok) sound.current.play(SOUND_CUE[sceneRef.current])
   }
 
   /* ── Scene controls ── */
@@ -478,7 +490,7 @@ export function Hero() {
         </div>
         {/* single WebGL view for the pinned desktop intro (the canvas is attached here when this host is active) */}
         <div className="hx3d" aria-hidden="true" />
-        {CAPS[scene] && <p className={`hx3d-cap hx3d-cap--stage hx3d-cap--${scene === 2 ? 'left' : 'right'}`}>{CAPS[scene]}</p>}
+        {CAPS[scene] && <p className={`hx3d-cap hx3d-cap--stage hx3d-cap--${scene === 3 ? 'left' : 'right'}`}>{CAPS[scene]}</p>}
         <ToolMarks />
 
         {/* 01 — Introduction */}
@@ -521,29 +533,23 @@ export function Hero() {
           </div>
         </div>
 
-        {/* 02 — Product thinking */}
-        <div className="scene scene--product" data-scene="1">
+        {/* 02 — AI-assisted exploration, human-led design */}
+        <div className="scene scene--ai" data-scene="1">
+          <GridField />
           <div className="scene__copy">
             <p className="hx-eyebrow">02 — {SCENES[1].name}</p>
             <Headline lines={SCENES[1].headline} id="hx-title-1" />
-            <ul className="hx-tags" aria-label="Capabilities">
+            {SCENES[1].sub && <p className="hx-sub hx-sub--scene">{SCENES[1].sub}</p>}
+            <ul className="hx-tags" aria-label="How AI is used">
               {SCENES[1].tags?.map((t) => <li key={t}>{t}</li>)}
             </ul>
           </div>
-          <div className="scene__visual">
-            <FlowGraphic />
-            <Slot3D i={1} />
-          </div>
-          <p className="hx3d-cap hx3d-cap--right">Process illustration · sample user flow</p>
+          <div className="scene__visual"><SpatialScene mode="ai" /><Slot3D i={1} /></div>
+          <p className="hx3d-cap hx3d-cap--right">Interface concept · AI-assisted, human-led</p>
         </div>
 
-        {/* 03 — Visual craft */}
-        <div className="scene scene--craft" data-scene="2">
-          <div className="scene__visual">
-            <CraftBoard />
-            <Slot3D i={2} />
-          </div>
-          <p className="hx3d-cap hx3d-cap--left">Illustrative elements — not client work</p>
+        {/* 03 — Product thinking */}
+        <div className="scene scene--product" data-scene="2">
           <div className="scene__copy">
             <p className="hx-eyebrow">03 — {SCENES[2].name}</p>
             <Headline lines={SCENES[2].headline} id="hx-title-2" />
@@ -551,20 +557,27 @@ export function Hero() {
               {SCENES[2].tags?.map((t) => <li key={t}>{t}</li>)}
             </ul>
           </div>
+          <div className="scene__visual">
+            <FlowGraphic />
+            <Slot3D i={2} />
+          </div>
+          <p className="hx3d-cap hx3d-cap--right">Process illustration · sample user flow</p>
         </div>
 
-        {/* 04 — AI + human judgment */}
-        <div className="scene scene--ai" data-scene="3">
-          <GridField />
+        {/* 04 — Visual craft */}
+        <div className="scene scene--craft" data-scene="3">
+          <div className="scene__visual">
+            <CraftBoard />
+            <Slot3D i={3} />
+          </div>
+          <p className="hx3d-cap hx3d-cap--left">Illustrative elements — not client work</p>
           <div className="scene__copy">
             <p className="hx-eyebrow">04 — {SCENES[3].name}</p>
             <Headline lines={SCENES[3].headline} id="hx-title-3" />
-            <a className="hx-cta btn btn--primary" href="/#work" onClick={toWork}>
-              Explore selected work <ArrowRight />
-            </a>
+            <ul className="hx-tags" aria-label="Capabilities">
+              {SCENES[3].tags?.map((t) => <li key={t}>{t}</li>)}
+            </ul>
           </div>
-          <div className="scene__visual"><SpatialScene mode="ai" /><Slot3D i={3} /></div>
-          <p className="hx3d-cap hx3d-cap--right">Interface concept · AI-assisted, human-led</p>
         </div>
 
         <div className="scene scene--delivery" data-scene="4">

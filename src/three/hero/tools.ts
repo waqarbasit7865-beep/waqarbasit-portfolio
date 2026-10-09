@@ -14,23 +14,31 @@ export interface ToolDef {
   tile?: boolean
   /** brand colour used for the carrier rim and the core ribbons */
   brand: string
-  ring: 0 | 1 | 2
+  /**
+   * hierarchy in the introduction:
+   *  primary   — Figma, the main design tool: largest, in front of the core
+   *  secondary — website implementation & publishing (Framer, Webflow, WordPress, Wix) and visual design (Photoshop, Illustrator)
+   *  support   — AI-assisted exploration (Claude, ChatGPT, Midjourney) and application / game development (Unity, Godot)
+   */
+  tier: 'primary' | 'secondary' | 'support'
+  /** what the tool stands for in this portfolio (screen-reader list and fallback captions) */
+  role: string
 }
-/* ring 0 = inner (AI + Figma), ring 1 = design / web, ring 2 = build / publish */
 export const TOOLS: ToolDef[] = [
-  { id: 'claude', name: 'Claude', file: 'claude.svg', brand: '#D97757', ring: 0 },
-  { id: 'chatgpt', name: 'ChatGPT', file: 'chatgpt.svg', brand: '#E8ECF5', ring: 0 },
-  { id: 'midjourney', name: 'Midjourney', file: 'midjourney.svg', brand: '#E8ECF5', ring: 0 },
-  { id: 'figma', name: 'Figma', file: 'figma.svg', brand: '#A259FF', ring: 0 },
-  { id: 'photoshop', name: 'Photoshop', file: 'photoshop.svg', tile: true, brand: '#31A8FF', ring: 1 },
-  { id: 'illustrator', name: 'Illustrator', file: 'illustrator.svg', tile: true, brand: '#FF9A00', ring: 1 },
-  { id: 'framer', name: 'Framer', file: 'framer.svg', brand: '#0055FF', ring: 1 },
-  { id: 'webflow', name: 'Webflow', file: 'webflow.svg', brand: '#146EF5', ring: 1 },
-  { id: 'wordpress', name: 'WordPress', file: 'wordpress.svg', brand: '#21759B', ring: 2 },
-  { id: 'wix', name: 'Wix', file: 'wix.svg', brand: '#E8ECF5', ring: 2 },
-  { id: 'unity', name: 'Unity', file: 'unity.svg', brand: '#E8ECF5', ring: 2 },
-  { id: 'godot', name: 'Godot', file: 'godot.svg', brand: '#478CBF', ring: 2 },
+  { id: 'figma', name: 'Figma', file: 'figma.svg', brand: '#A259FF', tier: 'primary', role: 'Product & interface design' },
+  { id: 'photoshop', name: 'Photoshop', file: 'photoshop.svg', tile: true, brand: '#31A8FF', tier: 'secondary', role: 'Visual design' },
+  { id: 'illustrator', name: 'Illustrator', file: 'illustrator.svg', tile: true, brand: '#FF9A00', tier: 'secondary', role: 'Visual design' },
+  { id: 'framer', name: 'Framer', file: 'framer.svg', brand: '#0055FF', tier: 'secondary', role: 'Website build & publishing' },
+  { id: 'webflow', name: 'Webflow', file: 'webflow.svg', brand: '#146EF5', tier: 'secondary', role: 'Website build & publishing' },
+  { id: 'wordpress', name: 'WordPress', file: 'wordpress.svg', brand: '#21759B', tier: 'secondary', role: 'Website build & publishing' },
+  { id: 'wix', name: 'Wix', file: 'wix.svg', brand: '#E8ECF5', tier: 'secondary', role: 'Website build & publishing' },
+  { id: 'claude', name: 'Claude', file: 'claude.svg', brand: '#D97757', tier: 'support', role: 'AI-assisted exploration' },
+  { id: 'chatgpt', name: 'ChatGPT', file: 'chatgpt.svg', brand: '#E8ECF5', tier: 'support', role: 'AI-assisted exploration' },
+  { id: 'midjourney', name: 'Midjourney', file: 'midjourney.svg', brand: '#E8ECF5', tier: 'support', role: 'AI-assisted exploration' },
+  { id: 'unity', name: 'Unity', file: 'unity.svg', brand: '#E8ECF5', tier: 'support', role: 'Application & game development' },
+  { id: 'godot', name: 'Godot', file: 'godot.svg', brand: '#478CBF', tier: 'support', role: 'Application & game development' },
 ]
+export const toolById = (id: string) => TOOLS.find((t) => t.id === id)!
 
 const BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
 
@@ -39,6 +47,12 @@ const logoCache = new Map<string, THREE.CanvasTexture>()
 const pending: Promise<void>[] = []
 /** resolves when every requested logo has been rasterised (used before still renders) */
 export const logosReady = () => Promise.all(pending).then(() => undefined)
+/** start rasterising every tool logo now (same sizes the carriers use) and resolve when all are ready —
+ *  call before taking still images, so no carrier is captured empty */
+export function preloadLogos() {
+  TOOLS.forEach((d) => logoTexture(d.file, 512, d.tile ? 0 : 40))
+  return logosReady()
+}
 export function logoTexture(file: string, px = 512, pad = 0): THREE.CanvasTexture {
   const key = `${file}:${px}:${pad}`
   const hit = logoCache.get(key)
@@ -130,7 +144,7 @@ const carrierBody = () =>
   }))
 
 /** A polished squircle carrier: metal-glass body, a thin brand-coloured rim light, the logo on its face. */
-export function makeToken(def: ToolDef, size: number): Token {
+export function makeToken(def: ToolDef, size: number, labelH = size * 0.3, rimOpacity = 0.32): Token {
   const root = new THREE.Group()
   const face = new THREE.Group()
   root.add(face)
@@ -138,7 +152,7 @@ export function makeToken(def: ToolDef, size: number): Token {
   const body = new THREE.Mesh(roundedBox(size, size, depth, size * 0.24, 5), carrierBody())
   face.add(body)
   // rim: a slightly larger, very thin plate behind the body, lit in the tool's colour
-  const rim = new THREE.MeshBasicMaterial({ color: def.brand, transparent: true, opacity: 0.32, toneMapped: false, depthWrite: false })
+  const rim = new THREE.MeshBasicMaterial({ color: def.brand, transparent: true, opacity: rimOpacity, toneMapped: false, depthWrite: false })
   const rimMesh = new THREE.Mesh(roundedBox(size * 1.07, size * 1.07, depth * 0.4, size * 0.27, 4), rim)
   rimMesh.position.z = -depth * 0.25
   face.add(rimMesh)
@@ -151,8 +165,8 @@ export function makeToken(def: ToolDef, size: number): Token {
   logo.scale.set(ls, ls, 1)
   logo.position.z = depth / 2 + 0.002
   face.add(logo)
-  const label = crispLabel(def.name, size * 0.3)
-  label.position.set(0, -size * 0.86, 0.01)
+  const label = crispLabel(def.name, labelH)
+  label.position.set(0, -size / 2 - labelH * 0.75, 0.01)
   face.add(label)
   return { def, root, face, rim, label, setQuality() {} }
 }

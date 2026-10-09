@@ -157,9 +157,9 @@ export const projects: Project[] = [
     status: 'published',
     composition: 'mobile',
     showcase: [
-      { kind: 'phone', src: '/projects/screens/xmoney-splash.webp', width: 390, height: 867, alt: 'X Money splash screen' },
-      { kind: 'phone', src: '/projects/screens/xmoney-dashboard.webp', width: 390, height: 867, alt: 'X Money dashboard with balance, frozen amount and security deposit' },
-      { kind: 'phone', src: '/projects/screens/xmoney-signup.webp', width: 390, height: 869, alt: 'X Money sign-up form' },
+      { kind: 'phone', src: '/projects/screens/xmoney-splash-front.webp', width: 390, height: 846, alt: 'X Money splash screen' },
+      { kind: 'phone', src: '/projects/screens/xmoney-signup-front.webp', width: 390, height: 846, alt: 'X Money sign-up form' },
+      { kind: 'phone', src: '/projects/screens/xmoney-dashboard-front.webp', width: 390, height: 846, alt: 'X Money dashboard with balance, frozen amount and security deposit' },
     ],
     brand: { accent: '#C59BFF', onAccent: '#1A0B2B', surface: '#130E1B' },
     cover: XM.qr,

@@ -105,7 +105,7 @@
  .spatial.is-visible .spatial__rig {animation:spatial-breathe 9s ease-in-out infinite alternate;}
  .spatial.is-visible .mini-chart i {animation:chart-breathe 5s ease-in-out infinite alternate;animation-delay:calc(var(--n)*-.35s);}
  .hero[data-active-scene='0']:not(.is-offscreen) .tool-token {animation:token-float 6s ease-in-out infinite alternate;animation-delay:calc(var(--n)*-.5s);}
- .hero--pinned:not([data-active-scene='3']) .spatial--ai *, .hero--pinned:not([data-active-scene='4']) .spatial--delivery * {animation-play-state:paused!important;}
+ .hero--pinned:not([data-active-scene='1']) .spatial--ai *, .hero--pinned:not([data-active-scene='4']) .spatial--delivery * {animation-play-state:paused!important;}
  .hero.is-offscreen .spatial * {animation-play-state:paused!important;}
 }
 @keyframes spatial-breathe {from{transform:rotateX(9deg) rotateY(-15deg) translateY(0)}to{transform:rotateX(13deg) rotateY(-10deg) translateY(-8px)}}
@@ -218,3 +218,10 @@
 }
 /* Keep perspective decoration inside its stage in the stacked tablet layout. */
 .hero:not(.hero--pinned) .hero__stage {overflow:hidden;}
+
+/* tool hierarchy in the no-WebGL fallback: Figma primary, AI + app/game tools supporting (still readable) */
+.tool-token--primary {font-size:12px;border-color:#a259ff66;box-shadow:0 4px 0 #080e17,0 0 22px #a259ff2e;}
+.tool-token--primary .tool-token__mark {width:30px;height:30px;}
+.tool-token--primary .tool-token__mark img {width:22px;height:22px;}
+.hero-tool-orbit .tool-token--primary {opacity:1!important;}
+.tool-token--support {font-size:9px;}

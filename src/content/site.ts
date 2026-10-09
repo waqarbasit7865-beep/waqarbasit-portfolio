@@ -11,27 +11,36 @@ export const site = {
   focus: ['SaaS', 'Web applications', 'Dashboards', 'Mobile apps', 'Design systems'],
   location: 'Lahore, Pakistan · working remotely',
   email: 'waqarbasit7865@gmail.com',
+  /** WhatsApp, supplied by Waqar in international format (+92 307 298 7657). wa.me needs digits only. */
+  whatsapp: { display: '+92 307 298 7657', href: 'https://wa.me/923072987657' },
   resume: '/Waqar_Basit_Resume.pdf',
 
   /** Shown in <title> and meta description of the homepage */
   seo: {
-    title: 'Waqar Basit — Senior UI/UX & Product Designer',
+    title: 'Waqar Basit — UI/UX & Product Designer for SaaS and Web Applications',
     description:
-      'Senior UI/UX & Product Designer with 5+ years across SaaS platforms, web applications, dashboards, mobile apps and design systems.',
+      'UI/UX & Product Designer for SaaS and web applications: user flows, information architecture, wireframes, interactive prototypes, polished interfaces, design systems and developer handoff.',
   },
 
   /**
-   * Four-scene scroll intro. Each headline array item is one masked line;
+   * Five-scene scroll intro (order matters: it is the page order). Each headline array item is one masked line;
    * wrap a word in *asterisks* for the serif-italic accent. `tags` are short factual capability lists from the resume.
    */
   hero: {
-    label: 'Waqar Basit · UI/UX & Product Designer',
+    label: 'Waqar Basit · UI/UX & Product Designer for SaaS and Web Applications',
     scenes: [
       {
         id: 'intro',
         name: 'Introduction',
         headline: ['Complex ideas.', '*Clear* experiences.'],
-        sub: 'I turn complex workflows into clear, intuitive digital products.',
+        sub: 'I design SaaS and web applications — from user flows and wireframes to interactive prototypes, polished interfaces, design systems and developer handoff.',
+      },
+      {
+        id: 'ai',
+        name: 'AI-assisted, human-led',
+        headline: ['AI-assisted exploration.', '*Human-led* design.'],
+        sub: 'AI widens the first round of ideas. I choose the direction, refine it and decide what ships.',
+        tags: ['Interface alternatives', 'UX-copy options', 'Prototype concepts'],
       },
       {
         id: 'product',
@@ -44,12 +53,6 @@ export const site = {
         name: 'Visual craft',
         headline: ['Precision in every screen.', '*Character* in every detail.'],
         tags: ['Visual hierarchy', 'Design systems', 'Reusable components', 'Responsive UI'],
-      },
-      {
-        id: 'ai',
-        name: 'AI + human judgment',
-        headline: ['AI-assisted exploration.', '*Human-led* design.'],
-        tags: [],
       },
       {
         id: 'delivery',

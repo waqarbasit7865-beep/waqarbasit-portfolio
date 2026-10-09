@@ -2,11 +2,11 @@
 import { getStage } from './engine'
 import { HeroWorld, type HeroOptions, type Region } from './hero/world'
 import { ProcessView } from './process'
-import { logosReady } from './hero/tools'
+import { logosReady, preloadLogos } from './hero/tools'
 import { isLowPower } from './support'
 
 export type { Region }
-export { HeroWorld, ProcessView, logosReady }
+export { HeroWorld, ProcessView, logosReady, preloadLogos }
 
 export function stage() {
   return getStage(isLowPower())

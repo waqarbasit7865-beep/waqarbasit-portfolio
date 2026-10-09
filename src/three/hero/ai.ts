@@ -1,17 +1,19 @@
 /**
- * 04 · AI + human judgment — "AI-assisted exploration. Human-led design."
- * Brief → AI exploration → human judgement → refined design.  Choreography: GENERATE → SELECT → REFINE.
- *  • a short brief feeds a compact exploration core, which generates three distinct interface concepts
- *    (sidebar dashboard, card grid, list) on a fan;
- *  • a designer-controlled selection frame examines each and settles on one;
- *  • the chosen concept moves forward onto a refinement platform while the others recede;
- *  • four deliberate refinements resolve it — spacing, type scale, contrast, components.
- * All scroll-driven, so it reverses with the page. Interface concept with neutral sample content.
+ * 02 · AI-assisted exploration, human-led design.
+ * Brief → AI exploration → designer judgement → refined prototype concept.  Choreography: GENERATE → SELECT → REFINE.
+ *  • a short brief (with its assumptions marked "to validate") feeds a compact exploration core, assisted by the
+ *    AI tools actually used (Claude, ChatGPT, Midjourney — official logos);
+ *  • the core generates three distinct interface alternatives (sidebar dashboard, card grid, list) and three
+ *    UX-copy options for the primary action;
+ *  • a designer-controlled selection frame examines each layout and settles on one; the designer also picks the copy;
+ *  • the chosen concept moves onto a refinement platform while the others recede; four deliberate refinements
+ *    resolve it, the chosen copy lands on its button, and it becomes a clickable prototype concept.
+ * Nothing here is presented as research or a validated result. Scroll-driven, so it reverses with the page.
  */
 import * as THREE from 'three'
 import { COL, GlowPath, glass, haloSprite, inOutCubic, inCubic, lerp, outBack, outCubic, roundedBox, satin, seg, setOpacity, torus, type Quality } from '../kit'
-import { Surface, UI, chip, rrect, skeleton, text, type Ctx2D } from '../ui'
-import { crispLabel } from './tools'
+import { Surface, UI, chip, mono, pointerMesh, rrect, skeleton, text, type Ctx2D } from '../ui'
+import { crispLabel, makeToken, toolById, type Token } from './tools'
 import { WIN, type Comp, type Ctx } from './common'
 
 const body = (c = '#151b2c') => satin(c, { metalness: 0.4, roughness: 0.26, clearcoat: 1, clearcoatRoughness: 0.1 })
@@ -60,8 +62,8 @@ const paintBrefined = (x: Ctx2D, w: number, h: number) => {
   rrect(x, 0, 0, 1000, H, 34, '#141a2b')
   text(x, 'Team dashboard', 48, 78, 54, UI.text, 650)
   text(x, 'Priorities this week', 48, 134, 32, UI.muted, 500)
-  rrect(x, 752, 50, 200, 64, 32, UI.accent)
-  text(x, '+ Add', 852, 84, 30, '#ffffff', 650, 'center')
+  rrect(x, 722, 50, 230, 64, 32, UI.accent)
+  text(x, '+ New task', 837, 84, 30, '#ffffff', 650, 'center')
   const col = (i: number) => 48 + i * 304
   const top = [
     ['Open', '12', UI.accentSoft],
@@ -106,10 +108,23 @@ const paintC = (x: Ctx2D, w: number, h: number) => {
 }
 
 const CHECKS = ['Spacing aligned to 8-pt grid', 'One type scale', 'Contrast AA · 4.8 : 1', 'Components resolved']
+const COPY = ['Add', 'Create item', '+ New task']
+const paintCopy = (sel: number) => (x: Ctx2D, w: number, h: number) => {
+  const H = (h / w) * 1000
+  rrect(x, 0, 0, 1000, H, 40, '#171d31')
+  text(x, 'UX COPY · PRIMARY ACTION', 56, 76, 38, UI.accentSoft, 650, 'left', mono)
+  COPY.forEach((t, i) => {
+    const y = 150 + i * 132
+    const on = sel > 0 && i === 2
+    rrect(x, 48, y, 904, 104, 26, on ? '#16352a' : '#1c2338', on ? UI.green : undefined, 4)
+    text(x, `“${t}”`, 92, y + 54, 46, on ? UI.text : '#AEB8D6', on ? 650 : 500)
+    if (on) text(x, '✓ Designer pick', 920, y + 54, 34, UI.green, 650, 'right')
+  })
+}
 
 export class AiComp implements Comp {
   group = new THREE.Group()
-  box = { w: 5.6, h: 4.2 }
+  box = { w: 5.4, h: 4.3 }
   private rig = new THREE.Group()
   private brief: THREE.Group
   private core = new THREE.Group()
@@ -127,13 +142,17 @@ export class AiComp implements Comp {
   private platform = new THREE.Group()
   private checks: { surf: Surface; g: THREE.Group }
   private checkState = -1
+  private copy: { surf: Surface; g: THREE.Group; state: number }
+  private aiTools: { t: Token; path: GlowPath }[] = []
+  private ptr = pointerMesh(0.085)
+  private protoLabel: THREE.Mesh
 
   constructor(q: Quality) {
     this.group.add(this.rig)
 
     /* brief */
-    const bw = 1.05
-    const bh = 0.66
+    const bw = 1.22
+    const bh = 0.76
     this.brief = new THREE.Group()
     const bs = new Surface(Math.round(bw * 560), Math.round(bh * 560), (x, w, h) => {
       const H = (h / w) * 1000
@@ -141,11 +160,12 @@ export class AiComp implements Comp {
       text(x, 'BRIEF', 56, 90, 42, UI.accentSoft, 650, 'left', '"Geist Mono Variable", ui-monospace, monospace')
       text(x, 'Team dashboard', 56, 210, 84, UI.text, 650)
       text(x, 'Clear priorities, fewer clicks', 56, 310, 50, UI.muted, 500)
-      chip(x, 'Desktop', 56, 470, 'blue', 40)
-      chip(x, 'AA contrast', 360, 470, 'green', 40)
+      chip(x, 'Desktop', 56, 420, 'blue', 40)
+      chip(x, 'AA contrast', 360, 420, 'green', 40)
+      text(x, 'Assumptions — to validate with users', 56, 540, 34, UI.amber, 500, 'left', mono)
     })
     this.brief.add(new THREE.Mesh(roundedBox(bw, bh, 0.08, 0.06, 4), body()), faceMesh(bs, bw, bh, 0.043))
-    this.brief.position.set(-2.25, 0.85, -0.2)
+    this.brief.position.set(-2.0, 0.98, -0.2)
     this.brief.rotation.y = 0.25
     this.rig.add(this.brief)
 
@@ -156,9 +176,9 @@ export class AiComp implements Comp {
     this.coreLabel = crispLabel('AI exploration', 0.1, '#C9D3EE', 560)
     this.coreLabel.position.set(0, -0.56, 0)
     this.core.add(this.coreLabel)
-    this.core.position.set(-1.35, -0.05, 0)
+    this.core.position.set(-1.12, 0.06, 0)
     this.rig.add(this.core)
-    this.feed = new GlowPath([new THREE.Vector3(-2.25, 0.5, -0.15), new THREE.Vector3(-1.9, 0.25, 0), new THREE.Vector3(-1.5, 0.05, 0)], 0.011, COL.blueSoft, '#ffffff', 48)
+    this.feed = new GlowPath([new THREE.Vector3(-1.85, 0.58, -0.15), new THREE.Vector3(-1.6, 0.35, 0), new THREE.Vector3(-1.32, 0.16, 0)], 0.011, COL.blueSoft, '#ffffff', 48)
     this.feed.mat.uniforms.uSpeed.value = 0
     this.rig.add(this.feed.mesh)
 
@@ -183,7 +203,7 @@ export class AiComp implements Comp {
       g.add(tag)
       this.rig.add(g)
       this.concepts.push({ g, home: new THREE.Vector3(x, y, z), rot: r, tag })
-      const A = new THREE.Vector3(-1.15, -0.05, 0)
+      const A = new THREE.Vector3(-0.92, 0.06, 0)
       const B = new THREE.Vector3(x - cw / 2, y, z)
       const p = new GlowPath([A, A.clone().lerp(B, 0.5).add(new THREE.Vector3(0, (y > 0 ? 0.15 : y < -0.5 ? -0.15 : 0), 0.2)), B], 0.008, '#7d9bff', '#ffffff', 48)
       p.mat.uniforms.uSpeed.value = 0
@@ -236,6 +256,40 @@ export class AiComp implements Comp {
     this.rig.add(kg)
     this.checks = { surf: ks, g: kg }
     this.paintChecks(0)
+
+    /* UX-copy options for the primary action, generated alongside the layouts */
+    const cw2 = 1.14
+    const ch2 = 0.74
+    const cs = new Surface(Math.round(cw2 * 600), Math.round(ch2 * 600), paintCopy(0))
+    const cg = new THREE.Group()
+    cg.add(new THREE.Mesh(roundedBox(cw2, ch2, 0.07, 0.06, 4), body()), faceMesh(cs, cw2, ch2, 0.038))
+    cg.position.set(-2.1, -0.62, -0.1)
+    cg.rotation.y = 0.22
+    this.rig.add(cg)
+    this.copy = { surf: cs, g: cg, state: 0 }
+
+    /* the AI tools that assist the exploration — official logos on small carriers, each wired to the core */
+    ;['claude', 'chatgpt', 'midjourney'].forEach((id, i) => {
+      const t = makeToken(toolById(id), 0.33, 0.1, 0.3)
+      // own copy of the shared carrier material: this rig fades its materials on exit
+      const bodyMesh = t.face.children[0] as THREE.Mesh
+      bodyMesh.material = (bodyMesh.material as THREE.Material).clone()
+      t.root.position.set(-1.78 + i * 0.48, -1.42, 0.1)
+      this.rig.add(t.root)
+      const a = t.root.position.clone().add(new THREE.Vector3(0, 0.15, 0))
+      const b = this.core.position.clone().add(new THREE.Vector3(0, -0.3, 0))
+      const p = new GlowPath([a, a.clone().lerp(b, 0.5).add(new THREE.Vector3(0.05, -0.05, 0.15)), b], 0.006, i === 0 ? '#D97757' : COL.blueSoft, '#ffffff', 32)
+      p.mat.uniforms.uSpeed.value = 0
+      this.rig.add(p.mesh)
+      this.aiTools.push({ t, path: p })
+    })
+
+    /* prototype concept: a pointer taps the chosen action on the refined design */
+    this.ptr.group.visible = false
+    this.concepts[1].g.add(this.ptr.group)
+    this.protoLabel = crispLabel('Prototype concept · designer-refined', 0.085, '#DCE4FF', 600)
+    this.protoLabel.position.set(0, -chh / 2 - 0.13, 0.05)
+    this.concepts[1].g.add(this.protoLabel)
   }
 
   private paintChecks(n: number) {
@@ -244,7 +298,7 @@ export class AiComp implements Comp {
     this.checks.surf.paint((x, w, h) => {
       const H = (h / w) * 1000
       rrect(x, 0, 0, 1000, H, 30, '#141a2b')
-      text(x, 'Refinements', 50, 70, 46, UI.muted, 600)
+      text(x, 'Designer refinements', 50, 70, 46, UI.muted, 600)
       CHECKS.forEach((t, i) => {
         const y = 150 + i * 92
         const done = i < n
@@ -259,6 +313,11 @@ export class AiComp implements Comp {
   }
 
   setQuality() {}
+
+  exports() {
+    this.group.updateMatrixWorld()
+    return { aiCore: this.core.getWorldPosition(new THREE.Vector3()) }
+  }
 
   update(c: Ctx) {
     const { T, clock } = c
@@ -352,11 +411,45 @@ export class AiComp implements Comp {
     this.checks.g.scale.setScalar(Math.max(ck, 0.0001))
     this.checks.g.visible = ck > 0.002
     this.paintChecks(c.still ? 4 : Math.min(4, Math.floor(seg(rf, 0.15, 1) * 4.999)))
+
+    // AI tools assist the exploration, then step back once the designer takes over
+    const tl = outBack(seg(e1, 0.15, 0.8), 1.4)
+    this.aiTools.forEach(({ t, path }, i) => {
+      t.root.scale.setScalar(Math.max(tl * (1 - mv * 0.18), 0.0001))
+      t.root.visible = tl > 0.002
+      const ph = seg(e2, i * 0.15, i * 0.15 + 0.5)
+      path.set(outCubic(seg(e1, 0.4, 1)), (0.55 + (ph > 0 && ph < 1 ? 0.4 : 0)) * (1 - mv * 0.6) * (1 - outCubic(o)), 0, ph > 0 && ph < 1 ? 1 : 0)
+      path.mat.uniforms.uPhase.value = 1 - Math.min(ph, 0.999)
+      t.rim.opacity = (0.3 + (ph > 0 && ph < 1 ? 0.4 : 0)) * (1 - outCubic(o))
+    })
+
+    // copy options: generated with the layouts, the designer picks one as the layout is chosen
+    const cpA = outBack(seg(e2, 0.35, 0.9), 1.4)
+    this.copy.g.scale.setScalar(Math.max(cpA * (1 - mv * 0.12), 0.0001))
+    this.copy.g.visible = cpA > 0.002
+    const chosen = c.still || s >= 0.85 ? 1 : 0
+    if (chosen !== this.copy.state) {
+      this.copy.state = chosen
+      this.copy.surf.paint(paintCopy(chosen))
+    }
+
+    // prototype: once refined, a pointer taps the chosen action and the hotspot answers
+    const pr = c.still ? 1 : seg(rf, 0.7, 1)
+    ;(this.protoLabel.material as THREE.MeshBasicMaterial).opacity = outCubic(pr) * (1 - outCubic(o))
+    const btn = new THREE.Vector3(0.36, 0.25, 0.08)
+    const from = new THREE.Vector3(0.62, -0.12, 0.12)
+    this.ptr.group.visible = pr > 0.01 && o < 0.5
+    this.ptr.group.position.lerpVectors(from, btn, inOutCubic(seg(pr, 0, 0.8)))
+    const tap = c.still ? 0 : pr >= 1 ? ((clock % 2.6) / 2.6) : 0
+    const tp = seg(tap, 0.1, 0.45)
+    this.ptr.ring.scale.setScalar(1 + tp * 2.4)
+    ;(this.ptr.ring.material as THREE.MeshBasicMaterial).opacity = tp > 0 && tp < 1 ? (1 - tp) * 0.9 : 0
   }
 
   dispose() {
     this.feed.dispose()
     this.emit.forEach((p) => p.dispose())
+    this.aiTools.forEach((a) => a.path.dispose())
   }
 }
 

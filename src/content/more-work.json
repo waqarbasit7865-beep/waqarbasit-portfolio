@@ -1,0 +1,167 @@
+{
+  "_readme": [
+    "More Client Work — the gallery under the three featured projects. Edit this file only; the page reads it.",
+    "Every entry is a project Waqar published on Behance or Contra (titles, links and facts copied from those pages).",
+    "Thumbnails: 'thumb.local' is a self-hosted copy in /public/work/more (create it with `npm run thumbs`, which downloads",
+    "'thumb.remote' and optimises it). Until the local file exists the page shows the published image from 'thumb.remote'.",
+    "Optional: 'caseStudy' = slug of a case-study page on this site; 'accent' = project colour (else read from the thumbnail).",
+    "Only fill 'client', 'role', 'tools' and 'live' with facts stated on the published project page."
+  ],
+  "projects": [
+    {
+      "id": "cocoon-reserve",
+      "title": "Cocoon Reserve",
+      "type": "Resort website · UI/UX & WordPress build",
+      "description": "Website for an adults-only eco resort in Lombok, Indonesia — an editorial layout with immersive photography and clear paths to rooms and booking.",
+      "client": "Cocoon Reserve",
+      "role": "UI/UX Designer and Front-End Developer — visual direction, page structure and the responsive build",
+      "tools": ["Figma", "WordPress"],
+      "accent": "#C9A55C",
+      "source": "Contra",
+      "href": "https://contra.com/p/Oq6sAsvU-cocoon-reserve-luxury-eco-resort-website-uiux-and-build",
+      "alsoOn": { "label": "Behance case study", "href": "https://www.behance.net/gallery/253292549/Cocoon-Reserve-Luxury-Resort-Website-UIUX-Case-Study" },
+      "live": "https://cocoonreserve.com",
+      "thumb": {
+        "local": "/work/more/cocoon-reserve.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/800035253292549.Y3JvcCw1NDU1LDQyNjcsNDcyLDA.jpg",
+        "alt": "Cocoon Reserve website case-study cover"
+      },
+      "images": [
+        { "local": "/work/more/cocoon-reserve-1.webp", "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/lopvuszeoqqamtm5r36y.webp", "alt": "Cocoon Reserve website design" },
+        { "local": "/work/more/cocoon-reserve-2.webp", "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/rctxqgonviprdyuglqpv.webp", "alt": "Cocoon Reserve website design" },
+        { "local": "/work/more/cocoon-reserve-3.webp", "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/r5cvjxcwvgskdsrwwj2x.webp", "alt": "Cocoon Reserve website design" }
+      ]
+    },
+    {
+      "id": "brandz-gallery",
+      "title": "Brandz Gallery",
+      "type": "Fashion e-commerce website · UI/UX",
+      "description": "A premium fashion store with elegant typography, immersive product presentation and an easy shopping experience on any device.",
+      "client": "Brandz Gallery",
+      "role": "UX research, information architecture, user flows, wireframing, UI design, responsive web design, design system and an interactive prototype",
+      "tools": ["Figma", "Adobe Photoshop"],
+      "source": "Contra",
+      "href": "https://contra.com/p/UWPeMkcg-brandz-gallery-fashion-e-commerce-website-uiux",
+      "alsoOn": { "label": "Behance case study", "href": "https://www.behance.net/gallery/251871765/Brandz-Gallery-Fashion-E-commerce-Website-Case-Study" },
+      "live": "https://brandzgallery.com",
+      "thumb": {
+        "local": "/work/more/brandz-gallery.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/b394d3251871765.Y3JvcCwxMzA5LDEwMjQsMTc0LDA.png",
+        "alt": "Brandz Gallery e-commerce website case-study cover"
+      },
+      "images": [
+        { "local": "/work/more/brandz-gallery-1.webp", "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/behqmnsqqesfi1rq84wf.webp", "alt": "Brandz Gallery website design" }
+      ]
+    },
+    {
+      "id": "nova-flare-connect",
+      "title": "Nova Flare Connect",
+      "type": "Enterprise POS & payment platform · UI/UX",
+      "description": "UI/UX design for an enterprise point-of-sale and payment platform.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/251616105/Nova-Flare-Connect-Enterprise-POS-Payment-Platform",
+      "thumb": {
+        "local": "/work/more/nova-flare-connect.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/6caeac251616105.Y3JvcCwxMzA5LDEwMjQsMTEzLDA.png",
+        "alt": "Nova Flare Connect platform case-study cover"
+      }
+    },
+    {
+      "id": "nusuk",
+      "title": "Nusuk — Hajj & Umrah",
+      "type": "Mobile app · UI/UX design",
+      "description": "Mobile app UI/UX design for Hajj and Umrah.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/253913867/Nusuk-Hajj-Umrah-Mobile-App-UIUX-Design",
+      "thumb": {
+        "local": "/work/more/nusuk.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/1889d4253913867.Y3JvcCwxMzg4LDEwODYsMzAsMA.png",
+        "alt": "Nusuk Hajj and Umrah mobile app design cover"
+      }
+    },
+    {
+      "id": "future-jobs",
+      "title": "The Future Jobs",
+      "type": "Job-search mobile app · UI/UX case study",
+      "description": "UI/UX case study for a job-search mobile app.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/253648823/The-Future-Jobs-Search-Mobile-App-UIUX-Case-Study",
+      "thumb": {
+        "local": "/work/more/future-jobs.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/d3509f253648823.Y3JvcCw1Nzg1LDQ1MjUsMTI4LDA.jpg",
+        "alt": "The Future Jobs search app case-study cover"
+      }
+    },
+    {
+      "id": "pearls-of-australia",
+      "title": "Pearls of Australia",
+      "type": "Luxury e-commerce · UX/UI case study",
+      "description": "UX/UI case study for a luxury e-commerce experience.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/253501243/Luxury-E-Commerce-UXUI-Case-Study-Pearls-of-Australia",
+      "thumb": {
+        "local": "/work/more/pearls-of-australia.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/fc1989253501243.Y3JvcCwxMzA5LDEwMjQsNzEsMA.png",
+        "alt": "Pearls of Australia e-commerce case-study cover"
+      }
+    },
+    {
+      "id": "qahwa-store",
+      "title": "Qahwa Store",
+      "type": "Coffee e-commerce website · UI/UX case study",
+      "description": "UI/UX case study for a coffee e-commerce website.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/253120585/Qahwa-Store-UIUX-Case-Study-Coffee-E-commerce-Website",
+      "thumb": {
+        "local": "/work/more/qahwa-store.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/5bc720253120585.Y3JvcCwxMTMxLDg4NSwyMDEsNzA.png",
+        "alt": "Qahwa Store coffee website case-study cover"
+      }
+    },
+    {
+      "id": "via-della-pace",
+      "title": "Via Della Pace NYC",
+      "type": "Restaurant website · case study",
+      "description": "Website case study for a New York restaurant.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/253606667/Via-Della-Pace-NYC-Restaurant-Website-Case-Study",
+      "thumb": {
+        "local": "/work/more/via-della-pace.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/9c6855253606667.Y3JvcCw1NDU1LDQyNjcsNjA3LDA.jpg",
+        "alt": "Via Della Pace NYC restaurant website case-study cover"
+      }
+    },
+    {
+      "id": "atelier",
+      "title": "Atelier",
+      "type": "Luxury e-commerce experience · UI/UX",
+      "description": "A minimal luxury e-commerce experience.",
+      "source": "Behance",
+      "href": "https://www.behance.net/gallery/248498675/Atelier-Minimal-Luxury-E-Commerce-Experience",
+      "thumb": {
+        "local": "/work/more/atelier.webp",
+        "remote": "https://mir-s3-cdn-cf.behance.net/projects/404/bbb48e248498675.Y3JvcCw1NzU0LDQ1MDEsNDk4LDA.jpg",
+        "alt": "Atelier e-commerce experience cover"
+      }
+    },
+    {
+      "id": "b2b-security-campaigns",
+      "title": "B2B Cybersecurity Campaigns",
+      "type": "Social media creative · brand design",
+      "description": "Social media campaign creatives for B2B cybersecurity and technology brands, in landscape and square formats for LinkedIn, Facebook and X.",
+      "role": "Brand designer and social content designer",
+      "tools": ["Adobe Illustrator", "Adobe Photoshop"],
+      "source": "Contra",
+      "href": "https://contra.com/p/Bm3eM6AU-enterprise-cybersecurity-social-media-campaigns-b2-b",
+      "alsoOn": { "label": "Full collection on Behance", "href": "https://www.behance.net/gallery/251740581/Social-Media-Post-B2B-Marketing-Design-Collection" },
+      "thumb": {
+        "local": "/work/more/b2b-security-campaigns.webp",
+        "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/o8a1o2a9aokr00lyyt6d.webp",
+        "alt": "Cybersecurity social media campaign creative"
+      },
+      "images": [
+        { "local": "/work/more/b2b-security-campaigns-1.webp", "remote": "https://media.contra.com/image/upload/fl_progressive/q_auto:best/mp0cpcorf0jhi1k12ena.webp", "alt": "Cybersecurity social media campaign creative" }
+      ]
+    }
+  ]
+}

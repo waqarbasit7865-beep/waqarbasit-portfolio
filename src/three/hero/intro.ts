@@ -1,40 +1,72 @@
 /**
- * 01 · Introduction — "a sculptural creative engine with connected tools".
- * A blue crystal core (with slow internal ribbons in a few of the tools' brand colours) inside three gimbal
- * rings. Twelve official tool logos ride three distinct orbital paths at different depths; each drifts gently
- * along its own path and faces the viewer. Every couple of seconds one tool sends a pulse into the core.
- * The layout is pre-computed so carriers and labels never collide and never sit behind the core.
- * Choreography: ORBIT. Exit: tools are drawn along their paths into the core, which travels on to become
- * the first node of scene 02.
+ * 01 · Introduction — UI/UX and product design, with a clear hierarchy of tools.
+ * A blue crystal core (with slow internal ribbons in a few brand colours) inside three gimbal rings.
+ *  • PRIMARY   — Figma, the largest carrier, sits in front of the core at the focal point;
+ *               around the core, compact models of the product-design skills ride the inner orbit:
+ *               user flows, wireframes → UI, prototypes, design systems (illustrative visuals, labelled).
+ *  • SECONDARY — middle orbit: Framer, Webflow, WordPress, Wix (website build & publishing) and
+ *               Photoshop, Illustrator (visual design).
+ *  • SUPPORT   — outer orbit, smaller and further back: Claude, ChatGPT, Midjourney (AI-assisted exploration)
+ *               and Unity, Godot (application / game development). Still fully readable.
+ * Hierarchy comes from scale, proximity to the core and rim-light intensity — never from fading logos out.
+ * Every item faces the viewer; the layout is pre-computed so carriers and labels never collide and never sit
+ * behind the core across the whole drift range. Every couple of seconds one item sends a pulse into the core
+ * (Figma most often). Exit: everything is drawn into the core, which travels on into scene 02.
  */
 import * as THREE from 'three'
 import { COL, GlowPath, clamp01, glass, haloSprite, inCubic, lerp, metal, outBack, outCubic, seg, sphere, torus, type Quality } from '../kit'
 import { WIN, type Comp, type Ctx } from './common'
-import { TOOLS, makeToken, type Token } from './tools'
+import { TOOLS, makeToken, toolById } from './tools'
+import { SKILLS, makeSkill, type SkillModel } from './skills'
 
 /** orbit planes: radius, tilt about X, tilt in the screen plane (applied X then Z) */
 const RINGS: [number, number, number][] = [
-  [1.72, -0.62, 0.42],
-  [2.45, 0.5, -0.18],
-  [2.78, 1.0, 0.1],
+  [1.85, -0.95, 0.35],
+  [2.6, 0.8, -0.2],
+  [3.1, 1.2, 0.12],
 ]
-/** home angle of each tool on its ring (found offline: no overlaps across the whole drift range) */
-const HOME = [2.497, 5.742, 0.804, 3.78, 4.112, 2.889, 0.184, 1.271, 2.374, 3.83, 4.513, 5.96]
-const DRIFT = 0.12
-const TOKEN = 0.56
+/** orbit items in order, with their home angle (found offline: no overlaps across the whole drift range) */
+const ORBIT: { kind: 'skill' | 'tool'; id: string; ring: 0 | 1 | 2; angle: number }[] = [
+  { kind: 'skill', id: 'flow', ring: 0, angle: 5.488 },
+  { kind: 'skill', id: 'wire', ring: 0, angle: 4.476 },
+  { kind: 'skill', id: 'proto', ring: 0, angle: 2.255 },
+  { kind: 'skill', id: 'system', ring: 0, angle: 0.49 },
+  { kind: 'tool', id: 'photoshop', ring: 1, angle: 2.735 },
+  { kind: 'tool', id: 'illustrator', ring: 1, angle: 0.222 },
+  { kind: 'tool', id: 'framer', ring: 1, angle: 4.417 },
+  { kind: 'tool', id: 'webflow', ring: 1, angle: 4.2 },
+  { kind: 'tool', id: 'wordpress', ring: 1, angle: 0.922 },
+  { kind: 'tool', id: 'wix', ring: 1, angle: 5.98 },
+  { kind: 'tool', id: 'claude', ring: 2, angle: 3.467 },
+  { kind: 'tool', id: 'chatgpt', ring: 2, angle: 5.458 },
+  { kind: 'tool', id: 'midjourney', ring: 2, angle: 4.273 },
+  { kind: 'tool', id: 'unity', ring: 2, angle: 5.922 },
+  { kind: 'tool', id: 'godot', ring: 2, angle: 0.826 },
+]
+const DRIFT = 0.07
+/** carrier size and label height per ring (hierarchy by scale) */
+const SIZE = [0.72, 0.48, 0.4]
+const LABEL = [0.17, 0.145, 0.135]
+/** primary: Figma in front of the core */
+const FIGMA_AT = new THREE.Vector3(-1.55, -0.72, 1.1)
+const FIGMA_SIZE = 0.92
 
 interface Slot {
-  token: Token
-  ring: number
+  root: THREE.Group
+  face: THREE.Group
+  rim: THREE.MeshBasicMaterial
+  rimBase: number
+  label: THREE.Mesh
+  ring: number // -1 = primary (not on an orbit)
   angle: number
   path: GlowPath
   curve: THREE.CatmullRomCurve3
-  home: THREE.Vector3
+  skill?: SkillModel
 }
 
 export class IntroComp implements Comp {
   group = new THREE.Group()
-  box = { w: 5.6, h: 4.8 }
+  box = { w: 6.6, h: 5.7 }
   private sculpt = new THREE.Group()
   private core: THREE.Mesh
   private shell: THREE.Mesh
@@ -42,10 +74,12 @@ export class IntroComp implements Comp {
   private ribbonGroup = new THREE.Group()
   private rings: { mesh: THREE.Mesh; target: THREE.Euler; speed: number }[] = []
   private halo: THREE.Sprite
+  private figmaHalo: THREE.Sprite
   private tilts: THREE.Group[] = []
   private rails: THREE.Mesh[] = []
   private beads: { m: THREE.Mesh; ring: number; phase: number }[] = []
   private slots: Slot[] = []
+  private figma!: Slot
   private q: Quality
   private tmpQ = new THREE.Quaternion()
   private tmpV = new THREE.Vector3()
@@ -64,7 +98,7 @@ export class IntroComp implements Comp {
     this.sculpt.add(this.halo, this.core, this.ribbonGroup, this.shell)
 
     /* internal ribbons: a restrained mix of tool colours moving inside the crystal (blue stays dominant) */
-    const ribbonCols = ['#5b7cff', '#D97757', '#A259FF', '#31A8FF']
+    const ribbonCols = ['#5b7cff', '#A259FF', '#D97757', '#31A8FF']
     ribbonCols.forEach((col, k) => {
       const pts: THREE.Vector3[] = []
       for (let i = 0; i < 64; i++) {
@@ -109,24 +143,53 @@ export class IntroComp implements Comp {
       }
     })
 
-    TOOLS.forEach((def, k) => {
-      const [R] = RINGS[def.ring]
-      const angle = HOME[k]
-      const token = makeToken(def, TOKEN)
-      const home = new THREE.Vector3(Math.cos(angle) * R, 0, Math.sin(angle) * R)
-      token.root.position.copy(home)
-      this.tilts[def.ring].add(token.root)
+    ORBIT.forEach((o) => {
+      const [R] = RINGS[o.ring]
+      const home = new THREE.Vector3(Math.cos(o.angle) * R, 0, Math.sin(o.angle) * R)
+      let slot: Omit<Slot, 'path' | 'curve' | 'ring' | 'angle'>
+      let brand: THREE.ColorRepresentation = COL.blueSoft
+      if (o.kind === 'skill') {
+        const sk = makeSkill(o.id as (typeof SKILLS)[number]['id'], SIZE[0], LABEL[0])
+        slot = { root: sk.root, face: sk.face, rim: sk.rim, rimBase: 0.3, label: sk.label, skill: sk }
+      } else {
+        const def = toolById(o.id)
+        const rimBase = o.ring === 1 ? 0.32 : 0.22
+        const t = makeToken(def, SIZE[o.ring], LABEL[o.ring], rimBase)
+        slot = { root: t.root, face: t.face, rim: t.rim, rimBase, label: t.label }
+        if (def.brand !== '#E8ECF5') brand = def.brand
+      }
+      slot.root.position.copy(home)
+      this.tilts[o.ring].add(slot.root)
       const dir = home.clone().normalize()
       const curve = new THREE.CatmullRomCurve3(
         [home.clone(), home.clone().multiplyScalar(0.6).add(new THREE.Vector3(0, 0.3, 0)), dir.clone().multiplyScalar(0.82), new THREE.Vector3(0, 0, 0)],
         false,
         'centripetal',
       )
-      const path = new GlowPath(curve, 0.008, def.brand === '#E8ECF5' ? COL.blueSoft : def.brand, '#ffffff', 64)
+      const path = new GlowPath(curve, o.ring === 0 ? 0.009 : 0.007, brand, '#ffffff', 64)
       path.mat.uniforms.uSpeed.value = 0
-      this.tilts[def.ring].add(path.mesh)
-      this.slots.push({ token, ring: def.ring, angle, path, curve, home })
+      this.tilts[o.ring].add(path.mesh)
+      this.slots.push({ ...slot, ring: o.ring, angle: o.angle, path, curve })
     })
+
+    /* primary: Figma, in front of the core, with a restrained brand-coloured key light */
+    const fdef = TOOLS.find((t) => t.tier === 'primary')!
+    const ft = makeToken(fdef, FIGMA_SIZE, 0.2, 0.42)
+    ft.root.position.copy(FIGMA_AT)
+    this.group.add(ft.root)
+    this.figmaHalo = haloSprite(fdef.brand, 1.9, 0.16)
+    this.figmaHalo.position.copy(FIGMA_AT).add(new THREE.Vector3(0, 0, -0.25))
+    this.group.add(this.figmaHalo)
+    const fcurve = new THREE.CatmullRomCurve3(
+      [FIGMA_AT.clone(), FIGMA_AT.clone().multiplyScalar(0.55).add(new THREE.Vector3(0.1, 0.25, 0)), FIGMA_AT.clone().normalize().multiplyScalar(0.8), new THREE.Vector3()],
+      false,
+      'centripetal',
+    )
+    const fpath = new GlowPath(fcurve, 0.012, fdef.brand, '#ffffff', 64)
+    fpath.mat.uniforms.uSpeed.value = 0
+    this.group.add(fpath.mesh)
+    this.figma = { root: ft.root, face: ft.face, rim: ft.rim, rimBase: 0.42, label: ft.label, ring: -1, angle: 0, path: fpath, curve: fcurve }
+    this.slots.push(this.figma)
   }
 
   setQuality(q: Quality) {
@@ -151,8 +214,8 @@ export class IntroComp implements Comp {
     if (!this.group.visible) return
     const idle = c.still ? 0 : clock
 
-    this.group.rotation.y = c.pointer.x * 0.12
-    this.group.rotation.x = -c.pointer.y * 0.06
+    this.group.rotation.y = c.pointer.x * 0.1
+    this.group.rotation.x = -c.pointer.y * 0.05
 
     /* core, shell and ribbons */
     const ca = outBack(seg(a, 0, 0.35), 1.4)
@@ -162,18 +225,19 @@ export class IntroComp implements Comp {
     this.shell.rotation.set(idle * 0.09, idle * 0.14, 0)
     this.ribbonGroup.scale.setScalar(Math.max(sh, 0.0001))
     this.ribbonGroup.rotation.y = idle * 0.18
-    this.ribbons.forEach((r, k) => r.set(1, (k === 0 ? 0.9 : 0.55) * outCubic(seg(a, 0.3, 0.8)), c.still ? 1.5 + k : idle, 1))
+    this.ribbons.forEach((r, k) => r.set(1, (k === 0 ? 0.9 : 0.5) * outCubic(seg(a, 0.3, 0.8)), c.still ? 1.5 + k : idle, 1))
 
-    // pulse: every 2.4 s one tool sends a signal into the core
-    const period = 2.4
-    const slot = c.still ? -1 : Math.floor(idle / period) % this.slots.length
-    const order = [0, 4, 8, 3, 6, 10, 1, 5, 9, 2, 7, 11]
-    const active = slot < 0 ? -1 : order[slot]
+    // pulse: every 2.2 s one item sends a signal into the core — Figma every third beat
+    const period = 2.2
+    const order = [15, 0, 7, 15, 1, 4, 15, 2, 10, 15, 3, 8, 15, 9, 12, 15, 5, 13, 15, 6, 11, 15, 14]
+    const beat = c.still ? -1 : Math.floor(idle / period) % order.length
+    const active = beat < 0 ? -1 : order[beat]
     const pp = c.still ? 0 : seg((idle % period) / period, 0.05, 0.6)
     const arrive = c.still ? 0 : Math.max(0, 1 - Math.abs(pp - 0.97) * 12)
-    this.halo.material.opacity = (0.3 + arrive * 0.25) * clamp01(a * 2) * (1 - o * 0.6)
+    this.halo.material.opacity = (0.3 + arrive * 0.22) * clamp01(a * 2) * (1 - o * 0.6)
 
-    const target = c.handoff.flowRoot
+    // continuity: the core travels on into the next scene
+    const target = c.handoff.aiCore ?? c.handoff.flowRoot
     if (target && o > 0) {
       this.sculpt.parent!.updateMatrixWorld()
       const local = this.group.worldToLocal(this.tmpV.copy(target))
@@ -187,7 +251,7 @@ export class IntroComp implements Comp {
     })
 
     const railA = outCubic(seg(a, 0.2, 0.7)) * (1 - o)
-    this.rails.forEach((r, i) => ((r.material as THREE.MeshBasicMaterial).opacity = (i === 0 ? 0.34 : 0.26) * railA))
+    this.rails.forEach((r, i) => ((r.material as THREE.MeshBasicMaterial).opacity = (i === 0 ? 0.34 : 0.24) * railA))
     this.beads.forEach((b) => {
       const R = RINGS[b.ring][0]
       const t = idle * (0.16 - b.ring * 0.03) + b.phase
@@ -196,32 +260,46 @@ export class IntroComp implements Comp {
     })
 
     c.camera.getWorldQuaternion(this.tmpQ)
+    const fly = outCubic(o)
     this.slots.forEach((s, k) => {
-      const R = RINGS[s.ring][0]
-      const kk = outBack(seg(a, 0.25 + k * 0.03, 0.62 + k * 0.03), 1.25)
-      const fly = outCubic(o)
-      const th = s.angle + (c.still ? 0 : DRIFT * Math.sin(idle * 0.35 + k * 1.7))
+      const primary = s.ring < 0
+      // primary arrives first, then the inner skills, then the orbits outward
+      const d0 = primary ? 0.18 : 0.26 + s.ring * 0.06 + (k % 5) * 0.025
+      const kk = outBack(seg(a, d0, d0 + 0.36), 1.25)
       if (fly > 0) {
-        s.curve.getPoint(Math.min(fly, 1), s.token.root.position)
+        s.curve.getPoint(Math.min(fly, 1), s.root.position)
+      } else if (primary) {
+        s.root.position.copy(FIGMA_AT)
+        s.root.position.y += c.still ? 0 : Math.sin(idle * 0.7) * 0.04
+        s.root.position.x -= (1 - outCubic(seg(a, d0, d0 + 0.4))) * 0.6
       } else {
-        const r = R * lerp(1.25, 1, outCubic(seg(a, 0.25 + k * 0.03, 0.62 + k * 0.03)))
-        s.token.root.position.set(Math.cos(th) * r, 0, Math.sin(th) * r)
+        const R = RINGS[s.ring][0]
+        // one shared drift phase: the layout was solved for the whole constellation swaying together
+        const th = s.angle + (c.still ? 0 : DRIFT * Math.sin(idle * 0.3))
+        const r = R * lerp(1.25, 1, outCubic(seg(a, d0, d0 + 0.36)))
+        s.root.position.set(Math.cos(th) * r, 0, Math.sin(th) * r)
       }
-      s.token.root.scale.setScalar(Math.max(kk * lerp(1, 0.15, fly), 0.0001))
-      // logo faces the viewer
-      s.token.root.parent!.getWorldQuaternion(s.token.face.quaternion).invert().multiply(this.tmpQ)
+      s.root.scale.setScalar(Math.max(kk * lerp(1, 0.15, fly), 0.0001))
+      // every item faces the viewer
+      s.root.parent!.getWorldQuaternion(s.face.quaternion).invert().multiply(this.tmpQ)
+      if (s.skill) s.skill.tick(idle, c.still)
       const isActive = k === active
-      const draw = outCubic(seg(a, 0.55 + k * 0.02, 0.98))
-      s.path.set(draw, (isActive ? 0.95 : 0.22) * (1 - 0.6 * o) * (kk > 0.01 ? 1 : 0), 0, isActive && pp > 0 && pp < 1 ? 1 : 0)
+      const draw = outCubic(seg(a, 0.55 + (k % 8) * 0.02, 0.98))
+      const base = primary ? 0.42 : s.ring === 0 ? 0.3 : 0.2
+      s.path.set(draw, (isActive ? 0.95 : base) * (1 - 0.6 * o) * (kk > 0.01 ? 1 : 0), 0, isActive && pp > 0 && pp < 1 ? 1 : 0)
       s.path.mat.uniforms.uPhase.value = Math.min(pp, 0.999)
       s.path.mat.uniforms.uFrom.value = fly
-      s.token.rim.opacity = 0.3 + (isActive ? Math.sin(Math.min(pp * 3, 1) * Math.PI) * 0.55 : 0)
-      ;(s.token.label.material as THREE.MeshBasicMaterial).opacity = (1 - fly) * clamp01(kk)
+      s.rim.opacity = s.rimBase + (isActive ? Math.sin(Math.min(pp * 3, 1) * Math.PI) * 0.5 : 0)
+      ;(s.label.material as THREE.MeshBasicMaterial).opacity = (1 - fly) * clamp01(kk)
     })
+    this.figmaHalo.material.opacity = 0.16 * clamp01(seg(a, 0.2, 0.6)) * (1 - fly) * (1 + (active === 15 ? arrive * 0.6 : 0))
   }
 
   dispose() {
-    this.slots.forEach((s) => s.path.dispose())
+    this.slots.forEach((s) => {
+      s.path.dispose()
+      s.skill?.dispose()
+    })
     this.ribbons.forEach((r) => r.dispose())
   }
 }

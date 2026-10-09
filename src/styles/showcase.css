@@ -317,3 +317,49 @@
   }
 }
 .cs-cover .pstage__chip { display: none; }
+
+/* X Money: front-facing centre phone, symmetrical outer phones.
+   Screens are perspective-corrected crops of the published images (see scripts/rectify-screen.py),
+   so the CSS adds no compounded skew; the island is already part of each screen. */
+.pstage--x-money .pstage__rig {
+  perspective-origin: 50% 45%;
+}
+.pstage--x-money .dev__island {
+  display: none;
+}
+.pstage--x-money .dev--phone {
+  aspect-ratio: 390 / 846;
+  transform:
+    translate(-50%, -50%)
+    translate3d(calc(var(--x) * (0.55 + 0.45 * var(--sp)) + var(--tx) * 0.6cqw), calc((1 - var(--sp)) * 4cqw + var(--ty) * 0.5cqw), var(--z))
+    rotateY(calc(var(--ry) + var(--tx) * 3deg));
+}
+.pstage--x-money .dev--p0 {
+  --x: -23cqw;
+  --z: -110px;
+  --ry: 16deg;
+  --rz: 0deg;
+}
+.pstage--x-money .dev--p1 {
+  --x: 0cqw;
+  --z: 30px;
+  --ry: 0deg;
+  --rz: 0deg;
+  transform:
+    translate(-50%, -50%)
+    translate3d(calc(var(--tx) * 0.4cqw), calc((1 - var(--sp)) * 4cqw + var(--ty) * 0.4cqw), var(--z));
+}
+.pstage--x-money .dev--p2 {
+  --x: 23cqw;
+  --z: -110px;
+  --ry: -16deg;
+  --rz: 0deg;
+}
+@media (max-width: 640px) {
+  .pstage--x-money .dev--p0 {
+    --x: -28cqw;
+  }
+  .pstage--x-money .dev--p2 {
+    --x: 28cqw;
+  }
+}

@@ -123,7 +123,7 @@ export function useHero3D(root: RefObject<HTMLElement | null>, pinned: boolean, 
             still.dispose()
           })
         // logos and fonts must be ready before a still image is taken
-        Promise.all([m.logosReady(), document.fonts?.ready]).then(() => !cancelled && snap())
+        Promise.all([m.preloadLogos(), document.fonts?.ready]).then(() => !cancelled && snap())
 
         if (mode === 'live') {
           slots.forEach((slot) => {

@@ -9,7 +9,7 @@
 import * as THREE from 'three'
 import type { View3D } from '../engine'
 import { damp, disposeTree, type Quality } from '../kit'
-import { WIN, type Comp, type Ctx } from './common'
+import { ORDER, WIN, localT, slotOf, type Comp, type Ctx } from './common'
 import { IntroComp, Waves } from './intro'
 import { FlowComp } from './flow'
 import { CraftComp } from './craft'
@@ -26,6 +26,7 @@ export interface Region {
 export interface HeroOptions {
   quality: Quality
   env: THREE.Texture
+  /** page position (0–4) of the one scene to show; compositions are mapped through ORDER */
   solo?: number | null
   still?: boolean
   /** free space (host px) for each scene, plus the "Clear" underline position; stage mode only */
@@ -54,7 +55,7 @@ export class HeroWorld implements View3D {
   private time?: () => number
 
   constructor(o: HeroOptions) {
-    this.solo = o.solo ?? null
+    this.solo = o.solo == null ? null : ORDER[o.solo]
     this.still = !!o.still
     this.measure = o.measure
     this.time = o.time
@@ -125,7 +126,7 @@ export class HeroWorld implements View3D {
     const regions = m?.regions ?? null
     this.comps.forEach((c, i) => {
       if (!c) return
-      const r: Region = regions?.[i] ?? { x: w * 0.06, y: h * 0.06, w: w * 0.88, h: h * 0.88 }
+      const r: Region = regions?.[slotOf(i)] ?? { x: w * 0.06, y: h * 0.06, w: w * 0.88, h: h * 0.88 }
       const cx = (r.x + r.w / 2 - w / 2) * wpp
       const cy = -(r.y + r.h / 2 - h / 2) * wpp
       const s = Math.min((r.w * wpp) / c.box.w, (r.h * wpp) / c.box.h)
@@ -171,6 +172,7 @@ export class HeroWorld implements View3D {
     for (let i = this.comps.length - 1; i >= 0; i--) {
       const c = this.comps[i]
       if (!c) continue
+      ctx.T = this.solo !== null ? T : localT(i, T)
       c.update(ctx)
       if (c.exports) Object.assign(this.handoff, c.exports())
     }

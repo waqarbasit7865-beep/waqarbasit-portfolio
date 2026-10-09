@@ -1,6 +1,8 @@
 import { Outlet, ScrollRestoration, createBrowserRouter, createHashRouter } from 'react-router-dom'
 import { Header } from './components/Header'
 import { DraftBadge } from './components/DraftBadge'
+import { WaveCursor } from './components/WaveCursor'
+import { ContactAssistant } from './components/ContactAssistant'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
 
@@ -12,6 +14,8 @@ function Layout() {
         <Outlet />
       </main>
       <DraftBadge />
+      <ContactAssistant />
+      <WaveCursor />
       <ScrollRestoration />
     </>
   )

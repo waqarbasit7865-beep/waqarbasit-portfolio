@@ -9,6 +9,7 @@ import { coverVT, pad, showVisual, visibleProjects } from '../lib/content'
 import { gsap, ScrollTrigger, MOTION_OK, PLAY_ONCE } from '../lib/gsap'
 import { useIsoLayoutEffect } from '../lib/hooks'
 import { clearWorkReturn, readWorkReturn, saveWorkReturn, type WorkReturn } from '../lib/workReturn'
+import { MoreWork } from './MoreWork'
 
 /** Editorial rhythm: first = wide feature, last = full-width closing, the rest alternate. */
 type Layout = 'feature' | 'offset' | 'wide' | 'closing'
@@ -165,6 +166,8 @@ export function Work() {
             <WorkItem key={p.slug} project={p} index={i} total={n} layout={layoutFor(i, n)} />
           ))}
         </ol>
+
+        <MoreWork />
       </div>
     </section>
   )

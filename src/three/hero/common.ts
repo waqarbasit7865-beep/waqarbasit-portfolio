@@ -2,8 +2,9 @@ import * as THREE from 'three'
 import type { Quality } from '../kit'
 
 /**
- * Hero timeline windows (GSAP timeline time, see Hero.tsx LABELS/BOUNDS).
- * Every composition reads the global time T, so scrolling up simply plays everything in reverse.
+ * Hero timeline windows. Every composition reads a time T derived from the GSAP scroll timeline, so scrolling up
+ * simply plays everything in reverse. Composition-local windows: Each composition is authored on its own time span below; the page order of the
+ * scenes is ORDER, and world.ts maps the global timeline time into each composition's span (see localT).
  */
 export const WIN = [
   { in: [-2.6, 0], out: [1.0, 1.45], settle: 0 }, // 01 Introduction — the load animation runs on T ∈ [-2.6, 0]
@@ -41,3 +42,37 @@ export interface Comp {
 
 /** visible between the start of its entry and the end of its exit */
 export const live = (i: number, T: number) => T >= WIN[i].in[0] - 0.001 && T <= WIN[i].out[1] + 0.001
+
+/** page order of the scenes → composition index (0 intro, 1 product flow, 2 visual craft, 3 AI, 4 delivery) */
+export const ORDER = [0, 3, 1, 2, 4] as const
+/** global timeline span of each page position (matches Hero.tsx BOUNDS) */
+const SLOT_SPAN: [number, number][] = [
+  [-2.6, 1.45],
+  [1.47, 3.65],
+  [3.66, 5.86],
+  [5.88, 8.05],
+  [8.06, 99],
+]
+/** composition-local span (its WIN entry start → exit end) */
+const COMP_SPAN: [number, number][] = [
+  [-2.6, 1.45],
+  [1.47, 3.65],
+  [3.66, 5.86],
+  [5.88, 8.05],
+  [8.06, 99],
+]
+/** page position of a composition */
+export const slotOf = (comp: number) => ORDER.indexOf(comp as (typeof ORDER)[number])
+/** global timeline time → the composition's own time (a linear remap of its page slot onto its authored span) */
+export function localT(comp: number, T: number) {
+  const s = SLOT_SPAN[slotOf(comp)]
+  const c = COMP_SPAN[comp]
+  if (s[0] === c[0] && s[1] === c[1]) return T
+  return c[0] + ((T - s[0]) * (c[1] - c[0])) / (s[1] - s[0])
+}
+/** global time at which a composition-local time occurs (inverse of localT) */
+export function globalT(comp: number, t: number) {
+  const s = SLOT_SPAN[slotOf(comp)]
+  const c = COMP_SPAN[comp]
+  return s[0] + ((t - c[0]) * (s[1] - s[0])) / (c[1] - c[0])
+}

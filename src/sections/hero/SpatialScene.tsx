@@ -29,16 +29,18 @@ export function SpatialScene({ mode }: { mode: 'ai' | 'delivery' }) {
 export function MiniChart() { return <div className="mini-chart">{[35,58,43,76,62,92,80].map((v,i)=><i key={i} style={{height:`${v}%`,'--n':i} as CSSProperties} />)}</div> }
 function MiniDashboard() {return <div className="mini-dash"><div><small>WORKSPACE OVERVIEW</small><strong>Make room for clarity.</strong></div><div className="mini-dash__body"><nav>Overview<br />Projects<br />Team</nav><div><span>Weekly activity</span><MiniChart /><p>Design review <b>Ready</b></p></div></div></div>}
 
+/* hierarchy: Figma primary · web build & visual design secondary · AI exploration and app / game development supporting */
 const tools = [
-  ['Figma','F','design'],['Claude','✳','AI'],['ChatGPT','◎','AI'],['Midjourney','⛵','imagery'],
-  ['Framer','F','web'],['Webflow','W','web'],['WordPress','W','web'],['Wix','Wix','web'],
-  ['Unity','◇','build'],['Godot','G','build'],['Photoshop','Ps','design'],['Illustrator','Ai','design'],
+  ['Figma','F','product design'],['Claude','✳','AI exploration'],['ChatGPT','◎','AI exploration'],['Midjourney','⛵','AI exploration'],
+  ['Framer','F','web build'],['Webflow','W','web build'],['WordPress','W','web build'],['Wix','Wix','web build'],
+  ['Unity','◇','app / game dev'],['Godot','G','app / game dev'],['Photoshop','Ps','visual design'],['Illustrator','Ai','visual design'],
 ]
+const tier = (name: string) => (name === 'Figma' ? ' tool-token--primary' : ['Claude', 'ChatGPT', 'Midjourney', 'Unity', 'Godot'].includes(name) ? ' tool-token--support' : '')
 /* official logos, bundled locally (see public/brand/SOURCES.txt) */
 const iconFiles: Record<string,string> = {Figma:'figma',Claude:'claude',Framer:'framer',Webflow:'webflow',WordPress:'wordpress',Wix:'wix',Unity:'unity',Godot:'godot',ChatGPT:'chatgpt',Midjourney:'midjourney',Photoshop:'photoshop',Illustrator:'illustrator'}
 export function ToolConstellation() {
   return <div className="tool-constellation" aria-label="Design and development tools">
     <div className="tool-constellation__rail" aria-hidden="true" />
-    {tools.map(([name,mark,category],i)=><span key={name} className="tool-token" style={{'--n':i} as CSSProperties}><span className="tool-token__mark" aria-hidden="true">{iconFiles[name] ? <img src={`/brand/${iconFiles[name]}.svg`} alt="" width="20" height="20" /> : mark}</span><span>{name}<small>{category}</small></span></span>)}
+    {tools.map(([name,mark,category],i)=><span key={name} className={`tool-token${tier(name)}`} style={{'--n':i} as CSSProperties}><span className="tool-token__mark" aria-hidden="true">{iconFiles[name] ? <img src={`/brand/${iconFiles[name]}.svg`} alt="" width="20" height="20" /> : mark}</span><span>{name}<small>{category}</small></span></span>)}
   </div>
 }
