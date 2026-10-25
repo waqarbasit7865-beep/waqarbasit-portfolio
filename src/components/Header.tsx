@@ -45,7 +45,7 @@ export function Header() {
   }
 
   return (
-    <header className={`header${scrolled ? ' is-scrolled' : ''}${open ? ' is-open' : ''}`}>
+    <header className={`header${pathname.replace(/\/$/, '') === '/work/blend-music' ? ' header--blend' : ''}${scrolled ? ' is-scrolled' : ''}${open ? ' is-open' : ''}`}>
       <a
         className="skip-link"
         href="#main"

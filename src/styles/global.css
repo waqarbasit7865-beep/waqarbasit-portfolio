@@ -680,3 +680,6 @@ section:focus {
 .notfound .btn {
   justify-self: start;
 }
+
+/* Keep the shared navigation readable above the light Blend Music case study. */
+.header--blend { background: #0d0e10; border-bottom: 1px solid rgba(255,255,255,.12); }

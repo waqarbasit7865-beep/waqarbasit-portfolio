@@ -11,11 +11,13 @@
     "typecheck": "tsc -b",
     "images": "node scripts/optimize-images.mjs",
     "build:artifact": "tsc -b && vite build --mode artifact",
-    "thumbs": "node scripts/fetch-more-work.mjs"
+    "thumbs": "node scripts/fetch-more-work.mjs",
+    "postbuild": "node scripts/export-blend-html.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
     "gsap": "^3.15.0",
     "react": "^19.3.0",

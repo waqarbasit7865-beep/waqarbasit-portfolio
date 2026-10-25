@@ -81,6 +81,22 @@ const UCL = {
 
 export const projects: Project[] = [
   {
+    slug: 'blend-music',
+    title: 'Blend Music',
+    category: 'Music App · UI/UX Case Study',
+    tagline: 'Find your sound. Feel every beat.',
+    summary: 'From pencil sketches to eight high-fidelity screens: a music discovery and listening experience designed by Waqar Basit.',
+    status: 'published',
+    composition: 'mobile',
+    brand: { accent: '#B95CFF', onAccent: '#17151C', surface: '#17151C' },
+    cover: { kind: 'image', src: '/projects/blend-music/cover.webp', width: 1600, height: 1000, alt: 'Blend Music case study: Home, Search and Now Playing screens with purple accents on a neutral background', source: 'local' },
+    role: 'UI/UX design',
+    tools: ['Figma'],
+    platforms: ['Mobile app'],
+    scope: ['Paper exploration', 'Wireframes', 'High-fidelity UI', 'Music discovery', 'Playback', 'Personal library'],
+    links: [{ label: 'Figma case study', href: 'https://www.figma.com/design/26iCZaA44RuXQVsGnvMz6j/Untitled?node-id=2-18', kind: 'case-study' }],
+  },
+  {
     slug: 'nova-flare-connect',
     title: 'Nova Flare Connect',
     tagline: 'Dashboard workflows for payments, inventory and business operations.',

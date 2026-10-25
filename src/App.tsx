@@ -27,6 +27,11 @@ const routes = [
     children: [
       { path: '/', element: <Home /> },
       {
+        path: '/work/blend-music',
+        HydrateFallback: () => null,
+        lazy: () => import('./pages/BlendMusicPage').then((m) => ({ Component: m.default })),
+      },
+      {
         path: '/work/:slug',
         HydrateFallback: () => null,
         // Code-split: the case-study template only loads when a project is opened

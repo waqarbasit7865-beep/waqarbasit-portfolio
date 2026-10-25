@@ -22,11 +22,11 @@ function prerenderRoutes(env: Record<string, string>): Plugin {
       const indexFile = path.join(out, 'index.html')
       if (!fs.existsSync(indexFile)) return
       const base = fs.readFileSync(indexFile, 'utf8')
-      const siteUrl = (env.VITE_SITE_URL || '').replace(/\/$/, '')
+      const siteUrl = (env.VITE_SITE_URL || 'https://waqarbasit-portfolio.pages.dev').replace(/\/$/, '')
       const showDrafts = env.VITE_SHOW_DRAFTS === 'true'
       const visible = projects.filter((p) => p.status === 'published' || showDrafts)
 
-      const render = (title: string, description: string, urlPath: string) => {
+      const render = (title: string, description: string, urlPath: string, shareImage?: string) => {
         let html = base
           .replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
           .replace(/(<meta name="description" content=")[^"]*(")/, `$1${esc(description)}$2`)
@@ -34,6 +34,9 @@ function prerenderRoutes(env: Record<string, string>): Plugin {
           .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${esc(description)}$2`)
         if (siteUrl) {
           html = html.replace('</head>', `  <link rel="canonical" href="${siteUrl}${urlPath}" />\n    <meta property="og:url" content="${siteUrl}${urlPath}" />\n  </head>`)
+        }
+        if (shareImage && siteUrl) {
+          html = html.replace('</head>', `  <meta property="og:image" content="${siteUrl}${shareImage}" />\n    <meta property="og:image:width" content="1200" />\n    <meta property="og:image:height" content="630" />\n    <meta property="og:image:alt" content="Blend Music: music app UI/UX case study by Waqar Basit" />\n    <meta name="twitter:title" content="${esc(title)}" />\n    <meta name="twitter:description" content="${esc(description)}" />\n    <meta name="twitter:image" content="${siteUrl}${shareImage}" />\n  </head>`)
         }
         return html
       }
@@ -44,7 +47,7 @@ function prerenderRoutes(env: Record<string, string>): Plugin {
         fs.mkdirSync(dir, { recursive: true })
         fs.writeFileSync(
           path.join(dir, 'index.html'),
-          render(`${p.title} — ${p.category} · ${site.name}`, p.summary, `/work/${p.slug}`),
+          render(`${p.title} — ${p.category} · ${site.name}`, p.summary, `/work/${p.slug}`, p.slug === 'blend-music' ? '/projects/blend-music/share.jpg' : undefined),
         )
       }
       if (siteUrl) {
