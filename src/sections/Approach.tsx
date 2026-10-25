@@ -84,7 +84,7 @@ export function Approach() {
           scrollTrigger: { trigger: '.playground', start: 'top 85%', toggleActions: PLAY_ONCE },
         })
       })
-      /* desktop: pin the stage; each fifth of the pinned distance is one step (with a snap to its centre) */
+      /* desktop: pin the stage; each fifth of the pinned distance is one step; scrolling stays native */
       mm.add(PIN, () => {
         const st = ScrollTrigger.create({
           trigger: '.ap-pin',
@@ -94,15 +94,6 @@ export function Approach() {
           pinSpacing: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          snap: {
-            snapTo: (v: number) => {
-              const cur = stRef.current?.progress ?? v
-              return (Math.min(N - 1, Math.floor(cur * N)) + 0.5) / N
-            },
-            duration: { min: 0.2, max: 0.5 },
-            delay: 0.25,
-            ease: 'power2.inOut',
-          },
           onUpdate: (self) => {
             if (performance.now() < lockUntil.current) return
             apply(Math.min(N - 1, Math.max(0, Math.floor(self.progress * N))))

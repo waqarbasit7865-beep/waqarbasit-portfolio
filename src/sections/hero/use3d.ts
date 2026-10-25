@@ -6,6 +6,7 @@
  *    is most in view and plays that composition's entry.
  */
 import { useEffect, type RefObject } from 'react'
+import { whenNearViewport } from '../../lib/deferred'
 import { disable3D, isLowPower, load3D, mode3D } from '../../three/support'
 
 type Region = { x: number; y: number; w: number; h: number }
@@ -79,66 +80,66 @@ export function useHero3D(root: RefObject<HTMLElement | null>, pinned: boolean, 
     let cancelled = false
     const cleanups: (() => void)[] = []
 
-    load3D()
-      .then((m) => {
-        if (cancelled) return
-        const stage = m.stage()
-        stage.onLost = () => disable3D()
+    const stopStart = whenNearViewport(el, () => {
+      load3D()
+        .then((m) => {
+          if (cancelled) return
+          const stage = m.stage()
+          stage.onLost = () => disable3D()
 
-        if (pinned && mode === 'live') {
-          const host = el.querySelector<HTMLElement>('.hx3d')
-          const stageEl = el.querySelector<HTMLElement>('.hero__stage')
-          if (!host || !stageEl) return
-          const world = m.createHero({ measure: () => measureFree(stageEl), time: () => time.T })
-          const off = stage.register({ el: host, view: world, priority: 2 })
-          const relayout = () => world.layout()
-          document.fonts?.ready.then(() => !cancelled && relayout())
-          // the headline settles after its load animation; re-measure once it has
-          const late = window.setTimeout(relayout, 2600)
-          cleanups.push(() => window.clearTimeout(late))
-          window.addEventListener('resize', relayout)
-          requestAnimationFrame(() => host.classList.add('is-ready'))
-          cleanups.push(() => {
-            off()
-            window.removeEventListener('resize', relayout)
-            host.classList.remove('is-ready')
-            world.dispose()
-          })
-          return
-        }
-
-        /* stacked layout: one slot per scene */
-        const slots = Array.from(el.querySelectorAll<HTMLElement>('.hx3d-slot'))
-        const snap = () =>
-          slots.forEach((slot) => {
-            const i = Number(slot.dataset.slot)
-            const img = slot.querySelector<HTMLImageElement>('.hx3d-still')
-            const w = slot.clientWidth
-            const h = slot.clientHeight
-            if (!img || !w || !h) return
-            const still = m.createHero({ solo: i, still: true })
-            img.src = stage.snapshot(still, w, h)
-            img.alt = ''
-            slot.classList.add('is-ready')
-            still.dispose()
-          })
-        // logos and fonts must be ready before a still image is taken
-        Promise.all([m.preloadLogos(), document.fonts?.ready]).then(() => !cancelled && snap())
-
-        if (mode === 'live') {
-          slots.forEach((slot) => {
-            const i = Number(slot.dataset.slot)
-            const world = m.createHero({ solo: i })
-            if (isLowPower()) world.setQuality('low')
-            const off = stage.register({ el: slot, view: world, onActive: (on) => slot.classList.toggle('is-live', on) })
+          if (pinned && mode === 'live') {
+            const host = el.querySelector<HTMLElement>('.hx3d')
+            const stageEl = el.querySelector<HTMLElement>('.hero__stage')
+            if (!host || !stageEl) return
+            const world = m.createHero({ measure: () => measureFree(stageEl), time: () => time.T })
+            const off = stage.register({ el: host, view: world, priority: 2 })
+            const relayout = () => world.layout()
+            document.fonts?.ready.then(() => !cancelled && relayout())
+            // the headline settles after its load animation; re-measure once it has
+            const late = window.setTimeout(relayout, 2600)
+            cleanups.push(() => window.clearTimeout(late))
+            window.addEventListener('resize', relayout)
+            requestAnimationFrame(() => host.classList.add('is-ready'))
             cleanups.push(() => {
               off()
+              window.removeEventListener('resize', relayout)
+              host.classList.remove('is-ready')
               world.dispose()
             })
+            return
+          }
+
+          /* stacked layout: one slot per scene */
+          const slots = Array.from(el.querySelectorAll<HTMLElement>('.hx3d-slot'))
+          // Prepare only the slots near the viewport, not five scenes and five snapshots
+          // during the initial mobile paint. Keep stills for inactive slots as before.
+          const assetsReady = Promise.all([m.preloadLogos(), document.fonts?.ready])
+          slots.forEach(slot => {
+            const stop = whenNearViewport(slot, () => {
+              void assetsReady.then(() => {
+                if (cancelled) return
+                const i = Number(slot.dataset.slot)
+                const img = slot.querySelector<HTMLImageElement>('.hx3d-still')
+                const w = slot.clientWidth, h = slot.clientHeight
+                if (!img || !w || !h) return
+                const still = m.createHero({ solo: i, still: true })
+                try { img.src = stage.snapshot(still, w, h) } finally { still.dispose() }
+                img.alt = ''
+                slot.classList.add('is-ready')
+                if (mode === 'live') {
+                  const world = m.createHero({ solo: i })
+                  if (isLowPower()) world.setQuality('low')
+                  const off = stage.register({ el: slot, view: world, onActive: on => slot.classList.toggle('is-live', on) })
+                  cleanups.push(() => { off(); slot.classList.remove('is-ready', 'is-live'); world.dispose() })
+                }
+              }).catch(() => { if (!cancelled) disable3D() })
+            }, '200px')
+            cleanups.push(stop)
           })
-        }
-      })
-      .catch(() => disable3D())
+        })
+        .catch(() => { if (!cancelled) disable3D() })
+    }, '200px')
+    cleanups.push(stopStart)
 
     return () => {
       cancelled = true

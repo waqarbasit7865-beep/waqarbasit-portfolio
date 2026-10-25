@@ -2,6 +2,8 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
+// Mobile browser chrome changes viewport height during scroll; do not rebuild pins for those tiny resizes.
+ScrollTrigger.config({ ignoreMobileResize: true })
 gsap.defaults({ ease: 'power3.out', duration: 0.9 })
 // Sections hide themselves when content is missing; don't warn about absent optional targets.
 gsap.config({ nullTargetWarn: false })

@@ -30,6 +30,8 @@ export interface Host {
   onActive?(on: boolean): void
   /** internal */
   ratio?: number
+  width?: number
+  height?: number
 }
 
 class Stage {
@@ -38,6 +40,7 @@ class Stage {
   quality: Quality
   private hosts = new Set<Host>()
   private active: Host | null = null
+  private ro: ResizeObserver
   private io: IntersectionObserver
   private raf = 0
   private last = 0
@@ -50,7 +53,7 @@ class Stage {
 
   constructor(lowPower: boolean) {
     this.quality = lowPower ? 'low' : 'high'
-    this.maxDpr = lowPower ? 1.5 : 2
+    this.maxDpr = lowPower ? 1.25 : 1.5
     this.renderer = new THREE.WebGLRenderer({ antialias: !lowPower || window.devicePixelRatio < 2, alpha: true, powerPreference: 'high-performance' })
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -66,6 +69,12 @@ class Stage {
       this.onLost?.()
     })
     environment(this.renderer)
+    this.ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const host = [...this.hosts].find(h => h.el === entry.target)
+        if (host) { host.width = Math.round(entry.contentRect.width); host.height = Math.round(entry.contentRect.height) }
+      }
+    })
     this.io = new IntersectionObserver((entries) => {
       for (const e of entries) {
         const h = [...this.hosts].find((x) => x.el === e.target)
@@ -110,11 +119,15 @@ class Stage {
 
   register(host: Host) {
     host.ratio = 0
+    host.width = host.el.clientWidth
+    host.height = host.el.clientHeight
+    this.ro.observe(host.el)
     this.hosts.add(host)
     host.view.setQuality?.(this.quality)
     this.io.observe(host.el)
     return () => {
       this.io.unobserve(host.el)
+      this.ro.unobserve(host.el)
       this.hosts.delete(host)
       if (this.active === host) {
         this.setActive(null)
@@ -133,6 +146,10 @@ class Stage {
         best = h
       }
     }
+    // Keep the current canvas host near a visibility tie. Without hysteresis, fractional
+    // observer/scroll measurements can move the canvas back and forth and replay a scene.
+    const activeScore = this.active ? (this.active.ratio ?? 0) * (this.active.priority ?? 1) : 0
+    if (best !== this.active && activeScore > 0 && score <= activeScore * 1.15) return
     if (best !== this.active) this.setActive(best)
   }
 
@@ -176,13 +193,13 @@ class Stage {
   private frame(dt: number) {
     const h = this.active
     if (!h) return
-    const w = h.el.clientWidth
-    const ht = h.el.clientHeight
+    const w = h.width ?? 0
+    const ht = h.height ?? 0
     if (!w || !ht) return
-    const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr)
+    const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr, Math.sqrt(2_000_000 / (w * ht)))
     if (w !== this.size.w || ht !== this.size.h || dpr !== this.size.dpr) {
+      if (dpr !== this.size.dpr) this.renderer.setPixelRatio(dpr)
       this.size = { w, h: ht, dpr }
-      this.renderer.setPixelRatio(dpr)
       this.renderer.setSize(w, ht, false)
       h.view.resize(w, ht)
     }
@@ -192,7 +209,7 @@ class Stage {
 
   /** Adaptive quality: sustained slow frames lower the pixel ratio, then switch to simplified materials. */
   private watch(dt: number) {
-    if (dt > 0.034) this.slow++
+    if (dt > 0.026) this.slow++
     else this.slow = Math.max(0, this.slow - 0.5)
     if (this.slow < 90) return
     this.slow = 0
@@ -206,14 +223,14 @@ class Stage {
 
   /** Render a view once into an image (used for still mode and the inactive mobile slots). */
   snapshot(view: View3D, w: number, h: number, type = 'image/webp'): string {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr, Math.sqrt(2_000_000 / (w * h)))
     this.renderer.setPixelRatio(dpr)
     this.renderer.setSize(w, h, false)
     view.resize(w, h)
     view.update(0, this.elapsed)
     this.renderer.render(view.scene, view.camera)
     const url = this.canvas.toDataURL(type, 0.9)
-    this.size.w = 0 // the active host re-applies its own size on the next frame
+    this.size = { w: 0, h: 0, dpr: 0 } // the active host re-applies its own size and pixel ratio
     if (this.active) this.frame(0)
     return url
   }

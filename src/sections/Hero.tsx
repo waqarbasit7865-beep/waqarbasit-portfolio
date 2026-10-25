@@ -20,13 +20,6 @@ const PROFILES = ['LinkedIn', 'Upwork']
 /** Timeline label times (scene dwell positions) and the scene boundaries used for the progress indicator */
 const LABELS = [0, 2.95, 5.25, 7.2, 9.4]
 const BOUNDS = [1.48, 3.66, 5.86, 8.05]
-/** Transition zones (timeline time). Stopping inside one snaps to its edge in the scroll direction. */
-const ZONES: [number, number][] = [
-  [1, 2.49],
-  [3.2, 4.4],
-  [5.43, 6.61],
-  [7.65, 8.65],
-]
 /** sound cue per page position (cues are themed: 0 intro, 1 product, 2 craft, 3 AI, 4 delivery) */
 const SOUND_CUE = [0, 3, 1, 2, 4]
 const sceneAt = (t: number) => BOUNDS.filter((b) => t >= b).length
@@ -264,32 +257,16 @@ export function Hero() {
           end: () => `+=${Math.round(window.innerHeight * 4.3)}`,
           pin: true,
           pinSpacing: true,
-          scrub: 0.7,
+          scrub: 0.35,
           animation: tl,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          // Snap only when scrolling stops mid-transition: finish it in the scroll direction. Dwell zones never snap.
-          snap: {
-            // ScrollTrigger passes a velocity-projected value; we use the actual resting progress instead,
-            // so a fast flick or a programmatic jump never overshoots into another scene.
-            snapTo: (v: number) => {
-              const st = stRef.current
-              const cur = st ? st.progress : v
-              const d = tl.duration()
-              const t = cur * d
-              const dir = st?.direction ?? 1
-              for (const [a, b] of ZONES) if (t > a && t < b) return (dir > 0 ? b : a) / d
-              return cur
-            },
-            duration: { min: 0.25, max: 0.7 },
-            delay: 0.15,
-            ease: 'power2.inOut',
-          },
-          onUpdate: (self) => updateScene(sceneAt(self.progress * tl.duration())),
+          // Native scrolling owns the position; avoid snapping against wheel / trackpad input.
         })
         stRef.current = st
         tl.eventCallback('onUpdate', () => {
           time3d.T = tl.time()
+          updateScene(sceneAt(tl.time()))
         })
         return () => {
           time3d.T = 0
@@ -455,7 +432,7 @@ export function Hero() {
     if (st) {
       const tl = st.animation as gsap.core.Timeline
       const y = st.start + (LABELS[i] / tl.duration()) * (st.end - st.start)
-      // Jump instantly; the scrubbed timeline animates the scenes in between (smooth native scrolling would fight snapping)
+      // One scroll change; the scrubbed timeline supplies the transition between scenes.
       window.scrollTo({ top: Math.round(y) + (i === SCENES.length - 1 ? -2 : 0), behavior: 'auto' })
     } else {
       root.current?.querySelectorAll('.scene')[i]?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
